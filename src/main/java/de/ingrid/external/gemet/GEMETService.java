@@ -23,6 +23,14 @@ public class GEMETService implements ThesaurusService {
     /** request RDF format from service (true) or JSON (false) */
     Boolean doRDF;
 
+    public Boolean getDoRDF() {
+        return doRDF;
+    }
+
+    public void setDoRDF(Boolean doRDF) {
+        this.doRDF = doRDF;
+    }
+
     public void init() throws Exception {
         ResourceBundle gemetProps = ResourceBundle.getBundle( "gemet" );
 

@@ -41,7 +41,7 @@ public class GEMETServiceTest {
     @Test
     public void getTerm() {
         // DESCRIPTOR term in german
-        String termId = "http://www.eionet.europa.eu/gemet/concept/6740"; // Schutzgebiet
+        String termId = "http://www.eionet.europa.eu/gemet/concept/6740";
         Locale locale = Locale.GERMAN;
         Term term = service.getTerm( termId, locale );
         checkTerm( term, termId, TermType.DESCRIPTOR, "Schutzgebiet" );
@@ -50,6 +50,12 @@ public class GEMETServiceTest {
         locale = Locale.ENGLISH;
         term = service.getTerm( termId, locale );
         checkTerm( term, termId, TermType.DESCRIPTOR, "protected area" );
+
+        // check Umlaute
+        termId = "http://www.eionet.europa.eu/gemet/concept/6743";
+        locale = Locale.GERMAN;
+        term = service.getTerm( termId, locale );
+        checkTerm( term, termId, TermType.DESCRIPTOR, "Geschützte Landschaft" );
 
         // INVALID term
         termId = "wrong id";

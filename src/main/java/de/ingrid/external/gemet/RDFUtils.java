@@ -31,20 +31,20 @@ public class RDFUtils {
     }
 
     public static String getType(Resource res) {
-        RDFNode node = getObject(res, "rdf", "type");
+        RDFNode node = getObject( res, "rdf", "type" );
         if (node != null) {
             return node.asNode().getURI();
         }
         return null;
     }
-    
+
     private static RDFNode getObject(Resource res, String namespace, String name) {
-        String nsURI = res.getModel().getNsPrefixURI(namespace);
-        Property prop = res.getModel().createProperty(nsURI + name);
-        Statement stmt = res.getProperty(prop);
+        String nsURI = res.getModel().getNsPrefixURI( namespace );
+        Property prop = res.getModel().createProperty( nsURI + name );
+        Statement stmt = res.getProperty( prop );
         return stmt != null ? stmt.getObject() : null;
     }
-    
+
     private static RDFNode getObject(Resource res, String namespace, String name, String lang) {
         String nsURI = res.getModel().getNsPrefixURI( namespace );
         if (nsURI == null)

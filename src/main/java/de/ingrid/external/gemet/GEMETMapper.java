@@ -3,6 +3,7 @@ package de.ingrid.external.gemet;
 import java.util.ResourceBundle;
 
 import org.apache.log4j.Logger;
+import org.json.simple.JSONObject;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 
@@ -36,18 +37,45 @@ public class GEMETMapper {
         String name = RDFUtils.getName( res, language );
         outTerm.setName( name );
 
-        outTerm.setType( getTermType( RDFUtils.getType( res ) ) );
+        outTerm.setType( getTermTypeFromRDF( RDFUtils.getType( res ) ) );
 
         // outTerm.setInspireThemes( ? );
 
         return outTerm;
     }
 
-    private TermType getTermType(String nodeType) {
-        if (nodeType.indexOf( "#Concept" ) != -1)
+    /**
+     * Creates a Term from the given JSON object.
+     * 
+     * @param json
+     *            JSON from response
+     * @return the API term
+     */
+    public Term mapToTerm(JSONObject json) {
+        Term outTerm = new TermImpl();
+        outTerm.setId( JSONUtils.getId( json ) );
+
+        String name = JSONUtils.getName( json );
+        outTerm.setName( name );
+
+        outTerm.setType( getTermTypeFromJSON( JSONUtils.getType( json ) ) );
+
+        // outTerm.setInspireThemes( ? );
+
+        return outTerm;
+    }
+
+    private TermType getTermTypeFromRDF(String rdfType) {
+        if (rdfType.indexOf( "#Concept" ) != -1)
             return TermType.DESCRIPTOR;
         else
             return TermType.NODE_LABEL;
     }
 
+    private TermType getTermTypeFromJSON(String jsonType) {
+        if (jsonType.indexOf( "/concept/" ) != -1)
+            return TermType.DESCRIPTOR;
+        else
+            return TermType.NODE_LABEL;
+    }
 }

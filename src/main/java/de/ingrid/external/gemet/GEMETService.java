@@ -3,7 +3,6 @@ package de.ingrid.external.gemet;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
-import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
 
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -15,12 +14,10 @@ import de.ingrid.external.om.TreeTerm;
 
 public class GEMETService implements ThesaurusService {
 
-    private final static Logger log = Logger.getLogger( GEMETService.class );
-
     GEMETClient gemetClient;
     GEMETMapper gemetMapper;
 
-    /** request RDF format from service (true) or JSON (false) */
+    /** request RDF format from service where possible (true) or JSON (false) */
     Boolean doRDF;
 
     public Boolean getDoRDF() {
@@ -34,10 +31,11 @@ public class GEMETService implements ThesaurusService {
     public void init() throws Exception {
         ResourceBundle gemetProps = ResourceBundle.getBundle( "gemet" );
 
-        gemetClient = new GEMETClient( gemetProps );
-        gemetMapper = new GEMETMapper( gemetProps );
-
         this.doRDF = Boolean.parseBoolean( gemetProps.getString( "service.request.rdf" ) );
+
+        this.gemetClient = new GEMETClient( gemetProps );
+        this.gemetMapper = new GEMETMapper();
+
     }
 
     @Override

@@ -1,8 +1,5 @@
 package de.ingrid.external.gemet;
 
-import java.util.ResourceBundle;
-
-import org.apache.log4j.Logger;
 import org.json.simple.JSONObject;
 
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -12,13 +9,6 @@ import de.ingrid.external.om.Term.TermType;
 import de.ingrid.external.om.impl.TermImpl;
 
 public class GEMETMapper {
-    private final static Logger log = Logger.getLogger( GEMETMapper.class );
-
-    private ResourceBundle bundle;
-
-    public GEMETMapper(ResourceBundle wfsProps) {
-        this.bundle = wfsProps;
-    }
 
     /**
      * Creates a Term from the given RDF model.

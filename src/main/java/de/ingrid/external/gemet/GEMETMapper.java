@@ -1,5 +1,11 @@
 package de.ingrid.external.gemet;
 
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
+
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -9,6 +15,36 @@ import de.ingrid.external.om.Term.TermType;
 import de.ingrid.external.om.impl.TermImpl;
 
 public class GEMETMapper {
+
+    public List<Term> mapSimilarTerms(List<JSONArray> jsonArrayList, String[] keywords, Locale locale) {
+        List<Term> resultList = new ArrayList<Term>();
+
+        List<String> resultNames = new ArrayList<String>();
+        for (JSONArray jsonArray : jsonArrayList) {
+            Iterator<JSONObject> iterator = jsonArray.iterator();
+            while (iterator.hasNext()) {
+                Term myTerm = mapToTerm( iterator.next() );
+
+                // check whether term contains all keywords
+                boolean addTerm = true;
+                for (String keyword : keywords) {
+                    if (!myTerm.getName().toLowerCase( locale ).contains( keyword.trim().toLowerCase( locale ) )) {
+                        addTerm = false;
+                        break;
+                    }
+                }
+
+                // add term if not already present
+                if (addTerm) {
+                    if (!resultNames.contains( myTerm.getName() )) {
+                        resultList.add( myTerm );
+                    }
+                }
+            }
+        }
+
+        return resultList;
+    }
 
     /**
      * Creates a Term from the given RDF model.

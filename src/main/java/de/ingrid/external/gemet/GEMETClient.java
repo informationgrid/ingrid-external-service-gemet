@@ -1,5 +1,7 @@
 package de.ingrid.external.gemet;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 
 import org.apache.commons.io.IOUtils;
@@ -10,6 +12,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.jena.atlas.web.TypedInputStream;
 import org.apache.jena.riot.web.HttpOp;
 import org.apache.log4j.Logger;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
@@ -33,8 +36,8 @@ public class GEMETClient {
     }
 
     public synchronized Resource getTermAsRDF(String termId) {
-        if (termId == null) {
-            throw new IllegalArgumentException( "The ID must not be null!" );
+        if (termId == null || termId.trim().length() == 0) {
+            throw new IllegalArgumentException( "No ID passed!" );
         }
         // create an empty model
         Model model = ModelFactory.createDefaultModel();
@@ -62,8 +65,8 @@ public class GEMETClient {
     }
 
     public synchronized JSONObject getTermAsJSON(String termId, String language) {
-        if (termId == null) {
-            throw new IllegalArgumentException( "The ID must not be null!" );
+        if (termId == null || termId.trim().length() == 0) {
+            throw new IllegalArgumentException( "No ID passed!" );
         }
 
         String req = HtmlUtils.prepareUrl( serviceUrl ) + "getConcept?concept_uri=" + termId + "&language=" + language;
@@ -75,7 +78,7 @@ public class GEMETClient {
         JSONObject result = null;
 
         try {
-            result = requestJsonUrl( req );
+            result = (JSONObject) requestJsonUrl( req );
         } catch (Exception e) {
             log.error( "The URI seems to have a problem: " + req, e );
         }
@@ -83,7 +86,36 @@ public class GEMETClient {
         return result;
     }
 
-    private JSONObject requestJsonUrl(String url) throws Exception {
+    public synchronized List<JSONArray> getSimilarTerms(String[] keywords, String language) {
+        if (keywords == null || keywords.length == 0) {
+            throw new IllegalArgumentException( "No keywords for similar terms passed!" );
+        }
+
+        List<JSONArray> resultList = new ArrayList<JSONArray>();
+        for (String keyword : keywords) {
+            if (keyword == null || keyword.trim().length() == 0) {
+                continue;
+            }
+
+            String req = HtmlUtils.prepareUrl( serviceUrl ) + "getConceptsMatchingKeyword?keyword=" + keyword
+                    + "&search_mode=4&thesaurus_uri=http://www.eionet.europa.eu/gemet/concept/&language=" + language;
+
+            if (log.isDebugEnabled()) {
+                log.debug( "Fetching term from: " + req );
+            }
+
+            try {
+                JSONArray result = (JSONArray) requestJsonUrl( req );
+                resultList.add( result );
+            } catch (Exception e) {
+                log.error( "The URI seems to have a problem: " + req, e );
+            }
+        }
+
+        return resultList;
+    }
+
+    private Object requestJsonUrl(String url) throws Exception {
         HttpClient client = HttpClientBuilder.create().useSystemProperties().build();
         HttpGet getMethod = new HttpGet( url );
         getMethod.addHeader( "User-Agent", "Request-Promise" );
@@ -92,7 +124,7 @@ public class GEMETClient {
         if (log.isDebugEnabled()) {
             log.debug( "response: " + json );
         }
-        return (JSONObject) new JSONParser().parse( json );
+        return new JSONParser().parse( json );
     }
 
 }

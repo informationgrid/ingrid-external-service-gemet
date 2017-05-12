@@ -1,6 +1,8 @@
 package de.ingrid.external.gemet;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
 import static org.hamcrest.core.IsNull.nullValue;
@@ -36,11 +38,42 @@ public class GEMETServiceTest {
     public void getRelatedTermsFromTerm() {}
 
     @Test
-    public void getSimilarTermsFromNames() {}
+    public void getSimilarTermsFromNames() {
+        // german term(s)
+        Term[] terms = service.getSimilarTermsFromNames( new String[] { "Wasser" }, true, Locale.GERMAN );
+        assertThat( terms.length, greaterThan( 0 ) );
+        for (Term term : terms) {
+            checkTerm( term, null, TermType.DESCRIPTOR, null );
+            assertThat( term.getName().toLowerCase(), containsString( "wasser" ) );
+        }
+
+        terms = service.getSimilarTermsFromNames( new String[] { "Schutz" }, true, Locale.GERMAN );
+        assertThat( terms.length, greaterThan( 0 ) );
+        for (Term term : terms) {
+            checkTerm( term, null, TermType.DESCRIPTOR, null );
+            assertThat( term.getName().toLowerCase(), containsString( "schutz" ) );
+        }
+
+        // only terms containing both keywords !
+        terms = service.getSimilarTermsFromNames( new String[] { "Wasser", "Schutz" }, true, Locale.GERMAN );
+        assertThat( terms.length, greaterThan( 0 ) );
+        for (Term term : terms) {
+            checkTerm( term, null, TermType.DESCRIPTOR, null );
+            assertThat( term.getName().toLowerCase(), containsString( "wasser" ) );
+            assertThat( term.getName().toLowerCase(), containsString( "schutz" ) );
+        }
+
+        // english term
+        terms = service.getSimilarTermsFromNames( new String[] { "Water" }, true, Locale.ENGLISH );
+        assertThat( terms.length, greaterThan( 0 ) );
+        for (Term term : terms) {
+            checkTerm( term, null, TermType.DESCRIPTOR, null );
+            assertThat( term.getName().toLowerCase(), containsString( "water" ) );
+        }
+    }
 
     @Test
     public void getTerm() {
-
         // check RDF and JSON response
         boolean[] doRDFChoice = { true, false };
         for (boolean doRDF : doRDFChoice) {
@@ -48,24 +81,21 @@ public class GEMETServiceTest {
 
             // DESCRIPTOR term in german
             String termId = "http://www.eionet.europa.eu/gemet/concept/6740";
-            Locale locale = Locale.GERMAN;
-            Term term = service.getTerm( termId, locale );
+            Term term = service.getTerm( termId, Locale.GERMAN );
             checkTerm( term, termId, TermType.DESCRIPTOR, "Schutzgebiet" );
 
             // in english
-            locale = Locale.ENGLISH;
-            term = service.getTerm( termId, locale );
+            term = service.getTerm( termId, Locale.ENGLISH );
             checkTerm( term, termId, TermType.DESCRIPTOR, "protected area" );
 
             // check Umlaute
             termId = "http://www.eionet.europa.eu/gemet/concept/6743";
-            locale = Locale.GERMAN;
-            term = service.getTerm( termId, locale );
+            term = service.getTerm( termId, Locale.GERMAN );
             checkTerm( term, termId, TermType.DESCRIPTOR, "Geschützte Landschaft" );
 
             // INVALID term
             termId = "wrong id";
-            term = service.getTerm( termId, locale );
+            term = service.getTerm( termId, Locale.GERMAN );
             assertThat( term, is( nullValue() ) );
         }
     }

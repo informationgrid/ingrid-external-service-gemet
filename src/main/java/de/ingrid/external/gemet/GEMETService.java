@@ -5,17 +5,21 @@ import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
 
+import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import com.hp.hpl.jena.rdf.model.Resource;
 
 import de.ingrid.external.ThesaurusService;
+import de.ingrid.external.gemet.GEMETClient.MatchingConceptsSearchMode;
 import de.ingrid.external.om.RelatedTerm;
 import de.ingrid.external.om.Term;
 import de.ingrid.external.om.TreeTerm;
 
 public class GEMETService implements ThesaurusService {
+
+    private final static Logger log = Logger.getLogger( GEMETService.class );
 
     GEMETClient gemetClient;
     GEMETMapper gemetMapper;
@@ -41,16 +45,40 @@ public class GEMETService implements ThesaurusService {
 
     }
 
+    // NOTICE: Parameter "addDescriptors" is irrelevant !
     @Override
-    public Term[] findTermsFromQueryTerm(String arg0, MatchingType arg1, boolean arg2, Locale locale) {
-        // TODO Auto-generated method stub
-        return null;
+    public Term[] findTermsFromQueryTerm(String queryTerm, MatchingType matching, boolean addDescriptors, Locale locale) {
+        return findTermsFromQueryTerm( null, queryTerm, matching, addDescriptors, locale );
     }
 
+    // NOTICE: Parameter "url" and "addDescriptors" are irrelevant !
     @Override
-    public Term[] findTermsFromQueryTerm(String arg0, String arg1, MatchingType arg2, boolean arg3, Locale locale) {
-        // TODO Auto-generated method stub
-        return null;
+    public Term[] findTermsFromQueryTerm(String url, String queryTerm, MatchingType matching, boolean addDescriptors, Locale locale) {
+        if (queryTerm == null || queryTerm.trim().length() == 0) {
+            log.warn( "Empty queryTerm (" + queryTerm + ") passed, we return empty list !" );
+            return new Term[] {};
+        }
+
+        String language = getGEMETLanguageFilter( locale );
+        MatchingConceptsSearchMode gemetSearchMode = getGEMETSearchMode( matching );
+
+        List<JSONArray> responseList = new ArrayList<JSONArray>();
+
+        // first search exact query term
+        responseList.add( gemetClient.getConceptsMatchingKeyword( queryTerm, language, gemetSearchMode ) );
+
+        // then search single keywords
+        String[] keywords = queryTerm.trim().split( " " );
+        if (keywords.length > 1) {
+            responseList.addAll( gemetClient.getConceptsMatchingKeywords( keywords, language, gemetSearchMode ) );
+        }
+
+        List<Term> resultList = new ArrayList<Term>();
+        if (responseList != null && responseList.size() > 0) {
+            resultList = gemetMapper.mapSimilarTerms( responseList, keywords, locale );
+        }
+
+        return resultList.toArray( new Term[resultList.size()] );
     }
 
     @Override
@@ -83,6 +111,7 @@ public class GEMETService implements ThesaurusService {
         return null;
     }
 
+    // NOTICE: Parameter "ignoreCase" is irrelevant !
     @Override
     public Term[] getSimilarTermsFromNames(String[] keywords, boolean ignoreCase, Locale locale) {
         String language = getGEMETLanguageFilter( locale );
@@ -91,7 +120,7 @@ public class GEMETService implements ThesaurusService {
         // with other keywords when mapping to terms. GEMET service always
         // ignores case !
 
-        List<JSONArray> response = gemetClient.getSimilarTerms( keywords, language );
+        List<JSONArray> response = gemetClient.getConceptsMatchingKeywords( keywords, language, MatchingConceptsSearchMode.CONTAINS );
 
         List<Term> resultList = new ArrayList<Term>();
         if (response != null && response.size() > 0) {
@@ -126,7 +155,7 @@ public class GEMETService implements ThesaurusService {
     private Term getTermFromJSON(String termId, Locale locale) {
         String language = getGEMETLanguageFilter( locale );
 
-        JSONObject response = gemetClient.getTermAsJSON( termId, language );
+        JSONObject response = gemetClient.getConceptAsJSON( termId, language );
 
         Term result = null;
         if (response != null) {
@@ -146,7 +175,7 @@ public class GEMETService implements ThesaurusService {
      * @return mapped term from RDF
      */
     private Term getTermFromRDF(String termId, Locale locale) {
-        Resource response = gemetClient.getTermAsRDF( termId );
+        Resource response = gemetClient.getConceptAsRDF( termId );
 
         Term result = null;
         if (response != null) {
@@ -176,5 +205,15 @@ public class GEMETService implements ThesaurusService {
         }
 
         return langFilter;
+    }
+
+    private MatchingConceptsSearchMode getGEMETSearchMode(MatchingType matching) {
+        if (MatchingType.BEGINS_WITH.equals( matching )) {
+            return MatchingConceptsSearchMode.BEGINS_WITH;
+        } else if (MatchingType.CONTAINS.equals( matching )) {
+            return MatchingConceptsSearchMode.CONTAINS;
+        }
+
+        return MatchingConceptsSearchMode.EXACT;
     }
 }

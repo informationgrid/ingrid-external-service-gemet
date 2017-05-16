@@ -1,8 +1,12 @@
 package de.ingrid.external.gemet;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.anyOf;
+import static org.hamcrest.Matchers.arrayWithSize;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.startsWith;
 import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
 import static org.hamcrest.core.IsNull.nullValue;
@@ -12,6 +16,7 @@ import java.util.Locale;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import de.ingrid.external.ThesaurusService.MatchingType;
 import de.ingrid.external.om.Term;
 import de.ingrid.external.om.Term.TermType;
 
@@ -26,7 +31,73 @@ public class GEMETServiceTest {
     }
 
     @Test
-    public void findTermsFromQueryTerm() {}
+    public void findTermsFromQueryTerm() {
+        // german terms
+
+        // begins with "Wasser"
+        Term[] terms = service.findTermsFromQueryTerm( "Wasser", MatchingType.BEGINS_WITH, true, Locale.GERMAN );
+        assertThat( terms.length, greaterThan( 0 ) );
+        for (Term term : terms) {
+            checkTerm( term, null, TermType.DESCRIPTOR, null );
+            assertThat( term.getName().toLowerCase(), startsWith( "wasser" ) );
+        }
+
+        // exact "Wasser"
+        terms = service.findTermsFromQueryTerm( "Wasser", MatchingType.EXACT, true, Locale.GERMAN );
+        assertThat( terms, arrayWithSize( 1 ) );
+        checkTerm( terms[0], null, TermType.DESCRIPTOR, null );
+        assertThat( terms[0].getName().toLowerCase(), equalTo( "wasser" ) );
+
+        // contains "Wasser"
+        terms = service.findTermsFromQueryTerm( "Wasser", MatchingType.CONTAINS, true, Locale.GERMAN );
+        assertThat( terms.length, greaterThan( 0 ) );
+        for (Term term : terms) {
+            checkTerm( term, null, TermType.DESCRIPTOR, null );
+            assertThat( term.getName().toLowerCase(), containsString( "wasser" ) );
+        }
+
+        // contains "Wasser" and "Schutz"
+        terms = service.findTermsFromQueryTerm( "Wasser Schutz", MatchingType.CONTAINS, true, Locale.GERMAN );
+        assertThat( terms.length, greaterThan( 0 ) );
+        for (Term term : terms) {
+            checkTerm( term, null, TermType.DESCRIPTOR, null );
+            assertThat( term.getName().toLowerCase(), containsString( "wasser" ) );
+            assertThat( term.getName().toLowerCase(), containsString( "schutz" ) );
+        }
+
+        // begins with "Wasser" or "Schutz" and then contains both
+        terms = service.findTermsFromQueryTerm( "Wasser Schutz", MatchingType.BEGINS_WITH, true, Locale.GERMAN );
+        assertThat( terms.length, greaterThan( 0 ) );
+        for (Term term : terms) {
+            checkTerm( term, null, TermType.DESCRIPTOR, null );
+            assertThat( term.getName().toLowerCase(), anyOf( startsWith( "wasser" ), startsWith( "schutz" ) ) );
+        }
+
+        // english term
+
+        // begins with "Water"
+        terms = service.findTermsFromQueryTerm( "Water", MatchingType.BEGINS_WITH, true, Locale.ENGLISH );
+        assertThat( terms.length, greaterThan( 0 ) );
+        for (Term term : terms) {
+            checkTerm( term, null, TermType.DESCRIPTOR, null );
+            assertThat( term.getName().toLowerCase(), startsWith( "water" ) );
+        }
+
+        // exact "water (substance)"
+        terms = service.findTermsFromQueryTerm( "Water (Substance)", MatchingType.EXACT, true, Locale.ENGLISH );
+        assertThat( terms, arrayWithSize( 1 ) );
+        checkTerm( terms[0], null, TermType.DESCRIPTOR, null );
+        assertThat( terms[0].getName().toLowerCase(), equalTo( "water (substance)" ) );
+
+        // contains "Water" and "Substance"
+        terms = service.findTermsFromQueryTerm( "Water Substance", MatchingType.CONTAINS, true, Locale.ENGLISH );
+        assertThat( terms.length, greaterThan( 0 ) );
+        for (Term term : terms) {
+            checkTerm( term, null, TermType.DESCRIPTOR, null );
+            assertThat( term.getName().toLowerCase(), containsString( "water" ) );
+            assertThat( term.getName().toLowerCase(), containsString( "substance" ) );
+        }
+    }
 
     @Test
     public void getHierarchyNextLevel() {}

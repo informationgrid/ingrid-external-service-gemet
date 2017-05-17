@@ -75,7 +75,7 @@ public class GEMETService implements ThesaurusService {
 
         List<Term> resultList = new ArrayList<Term>();
         if (responseList != null && responseList.size() > 0) {
-            resultList = gemetMapper.mapSimilarTerms( responseList, keywords, locale );
+            resultList = gemetMapper.mapToTerms( responseList, keywords, locale );
         }
 
         return resultList.toArray( new Term[resultList.size()] );
@@ -124,7 +124,7 @@ public class GEMETService implements ThesaurusService {
 
         List<Term> resultList = new ArrayList<Term>();
         if (response != null && response.size() > 0) {
-            resultList = gemetMapper.mapSimilarTerms( response, keywords, locale );
+            resultList = gemetMapper.mapToTerms( response, keywords, locale );
         }
 
         return resultList.toArray( new Term[resultList.size()] );
@@ -185,10 +185,40 @@ public class GEMETService implements ThesaurusService {
         return result;
     }
 
+    // NOTICE: Parameter "ignoreCase" is irrelevant !
     @Override
-    public Term[] getTermsFromText(String arg0, int arg1, boolean arg2, Locale locale) {
-        // TODO Auto-generated method stub
-        return null;
+    public Term[] getTermsFromText(String text, int analyzeMaxWords, boolean ignoreCase, Locale locale) {
+        if (text == null || text.trim().length() == 0) {
+            log.warn( "Empty text (" + text + ") passed, we return empty list !" );
+            return new Term[] {};
+        }
+
+        List<JSONArray> responseList = new ArrayList<JSONArray>();
+
+        // split text to words, only maximum of words
+        String[] keywords = text.trim().split( " " );
+        if (keywords.length > 1) {
+            if (keywords.length > analyzeMaxWords) {
+                String[] keywordsMax = new String[analyzeMaxWords];
+                for (int i = 0; i < analyzeMaxWords; i++) {
+                    keywordsMax[i] = keywords[i];
+                }
+                keywords = keywordsMax;
+            }
+            // remove all punctuation
+            for (int i = 0; i < keywords.length; i++) {
+                keywords[i] = keywords[i].replaceAll( "\\p{P}", "" );
+            }
+            String language = getGEMETLanguageFilter( locale );
+            responseList.addAll( gemetClient.getConceptsMatchingKeywords( keywords, language, MatchingConceptsSearchMode.EXACT ) );
+        }
+
+        List<Term> resultList = new ArrayList<Term>();
+        if (responseList != null && responseList.size() > 0) {
+            resultList = gemetMapper.mapToTerms( responseList );
+        }
+
+        return resultList.toArray( new Term[resultList.size()] );
     }
 
     /**

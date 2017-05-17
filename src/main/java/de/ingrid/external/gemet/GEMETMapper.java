@@ -16,7 +16,23 @@ import de.ingrid.external.om.impl.TermImpl;
 
 public class GEMETMapper {
 
-    public List<Term> mapSimilarTerms(List<JSONArray> jsonArrayList, String[] keywords, Locale locale) {
+    public List<Term> mapToTerms(List<JSONArray> jsonArrayList) {
+        return mapToTerms( jsonArrayList, null, null );
+    }
+
+    /**
+     * Map Concepts (JSON) to API Terms. Only use concepts containing keywords.
+     * 
+     * @param jsonArrayList
+     *            JSON concepts from GEMET request
+     * @param keywordsFilter
+     *            filter concepts: only use concepts containing all keywords.
+     *            Pass null if no filter.
+     * @param locale
+     *            only used when filtering
+     * @return mapped API Terms
+     */
+    public List<Term> mapToTerms(List<JSONArray> jsonArrayList, String[] keywordsFilter, Locale locale) {
         List<Term> resultList = new ArrayList<Term>();
 
         List<String> resultNames = new ArrayList<String>();
@@ -25,12 +41,15 @@ public class GEMETMapper {
             while (iterator.hasNext()) {
                 Term myTerm = mapToTerm( iterator.next() );
 
-                // check whether term contains all keywords
                 boolean addTerm = true;
-                for (String keyword : keywords) {
-                    if (!myTerm.getName().toLowerCase( locale ).contains( keyword.trim().toLowerCase( locale ) )) {
-                        addTerm = false;
-                        break;
+
+                // check whether term contains all keywords if keywords passed !
+                if (keywordsFilter != null) {
+                    for (String keywordFilter : keywordsFilter) {
+                        if (!myTerm.getName().toLowerCase( locale ).contains( keywordFilter.trim().toLowerCase( locale ) )) {
+                            addTerm = false;
+                            break;
+                        }
                     }
                 }
 

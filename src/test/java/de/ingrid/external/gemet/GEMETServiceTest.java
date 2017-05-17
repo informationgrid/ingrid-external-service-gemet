@@ -45,8 +45,7 @@ public class GEMETServiceTest {
         // exact "Wasser"
         terms = service.findTermsFromQueryTerm( "Wasser", MatchingType.EXACT, true, Locale.GERMAN );
         assertThat( terms, arrayWithSize( 1 ) );
-        checkTerm( terms[0], null, TermType.DESCRIPTOR, null );
-        assertThat( terms[0].getName().toLowerCase(), equalTo( "wasser" ) );
+        checkTerm( terms[0], "http://www.eionet.europa.eu/gemet/concept/9242", TermType.DESCRIPTOR, "Wasser" );
 
         // contains "Wasser"
         terms = service.findTermsFromQueryTerm( "Wasser", MatchingType.CONTAINS, true, Locale.GERMAN );
@@ -172,7 +171,33 @@ public class GEMETServiceTest {
     }
 
     @Test
-    public void getTermsFromText() {}
+    public void getTermsFromText() {
+        // german locations
+
+        String text = "Das Waldsterben nimmt zu und liegt am sauren Regen oder Wasser von der Wolke.";
+
+        // analyze full text (100 words)
+        Term[] terms = service.getTermsFromText( text, 100, true, Locale.GERMAN );
+        assertThat( terms.length, greaterThan( 0 ) );
+        for (Term term : terms) {
+            checkTerm( term, null, TermType.DESCRIPTOR, null );
+            assertThat( term.getName(), anyOf( equalTo( "Waldsterben" ), equalTo( "Wasser" ), equalTo( "Wolke" ) ) );
+        }
+
+        // analyze only 5 words
+        terms = service.getTermsFromText( text, 5, true, Locale.GERMAN );
+        assertThat( terms, arrayWithSize( 1 ) );
+        checkTerm( terms[0], "http://www.eionet.europa.eu/gemet/concept/12013", TermType.DESCRIPTOR, "Waldsterben" );
+
+        // english results
+
+        terms = service.getTermsFromText( "The death of the forest is increasing and is due to the acid rain or water from the sky.", 100, true, Locale.ENGLISH );
+        assertThat( terms.length, greaterThan( 0 ) );
+        for (Term term : terms) {
+            checkTerm( term, null, TermType.DESCRIPTOR, null );
+            assertThat( term.getName(), anyOf( equalTo( "forest" ), equalTo( "acid" ), equalTo( "rain" ) ) );
+        }
+    }
 
     private void checkTerm(Term term, String id, TermType type, String name) {
         assertThat( term, is( not( nullValue() ) ) );

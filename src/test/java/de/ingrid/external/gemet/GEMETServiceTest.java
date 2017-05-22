@@ -110,19 +110,87 @@ public class GEMETServiceTest {
     public void getRelatedTermsFromTerm() {
         // german terms
 
+        // NOTICE: Circular relations !
+        
+        //              ZUSATZVERZEICHNISSE
+        //                      |
+        //          -----------------------------
+        //          |                           |
+        //    HILFSBEGRIFFE            ALLGEMEINE UND ÜBEGREIFENDE BEGRIFFE
+        //          |
+        //     -------------------------------------
+        //     |                |                  |
+        //     |              Thema                |
+        //     |                |                  |
+        //     |  -------------------------------  |
+        //     |  |                             |  |
+        //   Off-Site                          in-situ
+
         // supergroup
+
+        // "ANTHROPOGENE AKTIVITÄTEN UND PRODUKTE, WIRKUNGEN AUF DIE UMWELT" -> 12 Untergruppen
         RelatedTerm[] terms = service.getRelatedTermsFromTerm( "http://www.eionet.europa.eu/gemet/supergroup/4044", Locale.GERMAN );
         assertThat( terms.length, equalTo( 12 ) );
         for (RelatedTerm term : terms) {
             checkTerm( term, null, TermType.NODE_LABEL, null );
             assertThat( term.getRelationType().equals( RelationType.CHILD ), is( true ) );
         }
+
+        // ZUSATZVERZEICHNISSE -> 2 Untergruppen
         terms = service.getRelatedTermsFromTerm( "http://www.eionet.europa.eu/gemet/supergroup/5306", Locale.GERMAN );
         assertThat( terms.length, equalTo( 2 ) );
         for (RelatedTerm term : terms) {
             checkTerm( term, null, TermType.NODE_LABEL, null );
             assertThat( term.getRelationType().equals( RelationType.CHILD ), is( true ) );
             assertThat( term.getName(), anyOf( equalTo( "ALLGEMEINE UND ÜBEGREIFENDE BEGRIFFE" ), equalTo( "HILFSBEGRIFFE" ) ) );
+        }
+
+        // group
+        
+        // HILFSBEGRIFFE
+        terms = service.getRelatedTermsFromTerm( "http://www.eionet.europa.eu/gemet/group/14980", Locale.GERMAN );
+        assertThat( terms.length, equalTo( 4 ) );
+        for (RelatedTerm term : terms) {
+            assertThat( term.getId(),
+                    anyOf( containsString( "supergroup/5306" ), containsString( "concept/4359" ), containsString( "concept/5825" ), containsString( "concept/14848" ) ) );
+            if (term.getId().contains( "supergroup/5306" )) {
+                checkTerm( term, "http://www.eionet.europa.eu/gemet/supergroup/5306", TermType.NODE_LABEL, "ZUSATZVERZEICHNISSE" );
+                assertThat( term.getRelationType().equals( RelationType.PARENT ), is( true ) );
+            }
+            if (term.getId().contains( "concept/14848" )) {
+                checkTerm( term, "http://www.eionet.europa.eu/gemet/concept/14848", TermType.DESCRIPTOR, "Thema" );
+                assertThat( term.getRelationType().equals( RelationType.CHILD ), is( true ) );
+            }
+            if (term.getId().contains( "concept/5825" )) {
+                checkTerm( term, "http://www.eionet.europa.eu/gemet/concept/5825", TermType.DESCRIPTOR, "Off-Site" );
+                assertThat( term.getRelationType().equals( RelationType.CHILD ), is( true ) );
+            }
+            if (term.getId().contains( "concept/4359" )) {
+                checkTerm( term, "http://www.eionet.europa.eu/gemet/concept/4359", TermType.DESCRIPTOR, "in-situ" );
+                assertThat( term.getRelationType().equals( RelationType.CHILD ), is( true ) );
+            }
+        }
+
+        // concept
+
+        // "Thema" -> NO PARENT, only group as parent !
+        terms = service.getRelatedTermsFromTerm( "http://www.eionet.europa.eu/gemet/concept/14848", Locale.GERMAN );
+        assertThat( terms.length, equalTo( 3 ) );
+        for (RelatedTerm term : terms) {
+            assertThat( term.getId(), anyOf( containsString( "concept/4359" ), containsString( "concept/5825" ), containsString( "group/14980" ) ) );
+            if (term.getId().contains( "concept/4359" )) {
+                checkTerm( term, "http://www.eionet.europa.eu/gemet/concept/4359", TermType.DESCRIPTOR, "in-situ" );
+                assertThat( term.getRelationType().equals( RelationType.CHILD ), is( true ) );
+            }
+            if (term.getId().contains( "concept/5825" )) {
+                checkTerm( term, "http://www.eionet.europa.eu/gemet/concept/5825", TermType.DESCRIPTOR, "Off-Site" );
+                assertThat( term.getRelationType().equals( RelationType.CHILD ), is( true ) );
+            }
+            // NO PARENT, only group as parent !
+            if (term.getId().contains( "group/14980" )) {
+                checkTerm( term, "http://www.eionet.europa.eu/gemet/group/14980", TermType.NODE_LABEL, "HILFSBEGRIFFE" );
+                assertThat( term.getRelationType().equals( RelationType.PARENT ), is( true ) );
+            }
         }
 
         // INVALID term

@@ -162,6 +162,8 @@ public class GEMETMapper {
             return RelationType.PARENT;
         else if (ConceptRelation.NARROWER == conceptRelation)
             return RelationType.CHILD;
+        else if (ConceptRelation.GROUP == conceptRelation)
+            return RelationType.PARENT;
         else if (ConceptRelation.GROUP_MEMBER == conceptRelation)
             return RelationType.CHILD;
 

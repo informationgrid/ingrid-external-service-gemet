@@ -12,6 +12,7 @@ import org.json.simple.JSONObject;
 import com.hp.hpl.jena.rdf.model.Resource;
 
 import de.ingrid.external.ThesaurusService;
+import de.ingrid.external.gemet.GEMETClient.ConceptRelation;
 import de.ingrid.external.gemet.GEMETClient.MatchingConceptsSearchMode;
 import de.ingrid.external.om.RelatedTerm;
 import de.ingrid.external.om.Term;
@@ -75,7 +76,7 @@ public class GEMETService implements ThesaurusService {
 
         List<Term> resultList = new ArrayList<Term>();
         if (responseList != null && responseList.size() > 0) {
-            resultList = gemetMapper.mapToTerms( responseList, keywords, locale );
+            resultList = gemetMapper.mapToTermsWithKeywordsFilter( responseList, keywords, locale );
         }
 
         return resultList.toArray( new Term[resultList.size()] );
@@ -106,9 +107,22 @@ public class GEMETService implements ThesaurusService {
     }
 
     @Override
-    public RelatedTerm[] getRelatedTermsFromTerm(String arg0, Locale locale) {
-        // TODO Auto-generated method stub
-        return null;
+    public RelatedTerm[] getRelatedTermsFromTerm(String termId, Locale locale) {
+        if (termId == null || termId.trim().length() == 0) {
+            log.warn( "No termId passed (" + termId + "), we return empty result !" );
+            return new RelatedTerm[] {};
+        }
+
+        List<RelatedTerm> resultList = new ArrayList<RelatedTerm>();
+        String language = getGEMETLanguageFilter( locale );
+
+        // we iterate over all relations !
+        for (ConceptRelation concRelation : ConceptRelation.values()) {
+            JSONArray relatedConcepts = gemetClient.getRelatedConcepts( termId, concRelation, language );
+            resultList.addAll( gemetMapper.mapToRelatedTerms( relatedConcepts, concRelation ) );
+        }
+
+        return resultList.toArray( new RelatedTerm[resultList.size()] );
     }
 
     // NOTICE: Parameter "ignoreCase" is irrelevant !
@@ -124,7 +138,7 @@ public class GEMETService implements ThesaurusService {
 
         List<Term> resultList = new ArrayList<Term>();
         if (response != null && response.size() > 0) {
-            resultList = gemetMapper.mapToTerms( response, keywords, locale );
+            resultList = gemetMapper.mapToTermsWithKeywordsFilter( response, keywords, locale );
         }
 
         return resultList.toArray( new Term[resultList.size()] );

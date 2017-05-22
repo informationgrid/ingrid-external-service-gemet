@@ -1,7 +1,5 @@
 package de.ingrid.external.gemet;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -46,6 +44,46 @@ public class GEMETClient {
         }
     }
 
+    /**
+     * GEMET API concept types (known thesauri) used in "thesaurus_uri"
+     * parameter, see
+     * http://www.eionet.europa.eu/gemet/webservices#knownrelations
+     */
+    public enum ConceptType {
+        CONCEPT("http://www.eionet.europa.eu/gemet/concept/"), GROUP("http://www.eionet.europa.eu/gemet/group/"), SOUPERGROUP("http://www.eionet.europa.eu/gemet/supergroup/");
+
+        private final String value;
+
+        ConceptType(final String newValue) {
+            value = newValue;
+        }
+
+        @Override
+        public String toString() {
+            return value;
+        }
+    }
+
+    /**
+     * GEMET API concept relations used in "relation_uri" parameter, see
+     * http://www.eionet.europa.eu/gemet/webservices#knownrelations
+     */
+    public enum ConceptRelation {
+        NARROWER("http://www.w3.org/2004/02/skos/core#narrower"), BROADER("http://www.w3.org/2004/02/skos/core#broader"), RELATED("http://www.w3.org/2004/02/skos/core#related"), GROUP_MEMBER(
+                "http://www.eionet.europa.eu/gemet/2004/06/gemet-schema.rdf#groupMember");
+
+        private final String value;
+
+        ConceptRelation(final String newValue) {
+            value = newValue;
+        }
+
+        @Override
+        public String toString() {
+            return value;
+        }
+    }
+
     /** The URL to the service to use */
     private String serviceUrl;
     /** The URL to the thesaurus to use, passed as parameter in request */
@@ -56,14 +94,14 @@ public class GEMETClient {
         this.thesaurusUrl = gemetProps.getString( "service.thesaurus_uri" );
     }
 
-    public synchronized Resource getConceptAsRDF(String termId) {
-        if (termId == null || termId.trim().length() == 0) {
-            throw new IllegalArgumentException( "No ID passed!" );
+    public Resource getConceptAsRDF(String conceptUri) {
+        if (conceptUri == null || conceptUri.trim().length() == 0) {
+            throw new IllegalArgumentException( "No conceptUri passed!" );
         }
         // create an empty model
         Model model = ModelFactory.createDefaultModel();
 
-        String req = termId;
+        String req = conceptUri;
 
         if (log.isDebugEnabled()) {
             log.debug( "Fetching term from: " + req );
@@ -82,15 +120,15 @@ public class GEMETClient {
             return null;
         }
 
-        return model.getResource( termId );
+        return model.getResource( conceptUri );
     }
 
-    public synchronized JSONObject getConceptAsJSON(String termId, String language) {
-        if (termId == null || termId.trim().length() == 0) {
-            throw new IllegalArgumentException( "No ID passed!" );
+    public JSONObject getConceptAsJSON(String conceptUri, String language) {
+        if (conceptUri == null || conceptUri.trim().length() == 0) {
+            throw new IllegalArgumentException( "No conceptUri passed!" );
         }
 
-        String req = HtmlUtils.prepareUrl( serviceUrl ) + "getConcept?concept_uri=" + termId + "&language=" + language;
+        String req = HTMLUtils.prepareUrl( serviceUrl ) + "getConcept?concept_uri=" + conceptUri + "&language=" + language;
 
         if (log.isDebugEnabled()) {
             log.debug( "Fetching term from: " + req );
@@ -121,7 +159,7 @@ public class GEMETClient {
      * @return list of JSONArray(s) containing concepts or empty list or list of
      *         empty JSONArray(s)
      */
-    public synchronized List<JSONArray> getConceptsMatchingKeywords(String[] keywords, String language, MatchingConceptsSearchMode searchMode) {
+    public List<JSONArray> getConceptsMatchingKeywords(String[] keywords, String language, MatchingConceptsSearchMode searchMode) {
         List<JSONArray> resultList = new ArrayList<JSONArray>();
         if (keywords == null || keywords.length == 0) {
             log.warn( "No keywords passed, we return empty list !" );
@@ -151,24 +189,41 @@ public class GEMETClient {
      *            which language
      * @return array of concepts in JSON or empty array.
      */
-    public synchronized JSONArray getConceptsMatchingKeyword(String keyword, String language, MatchingConceptsSearchMode searchMode) {
+    public JSONArray getConceptsMatchingKeyword(String keyword, String language, MatchingConceptsSearchMode searchMode) {
         JSONArray result = new JSONArray();
         if (keyword == null || keyword.trim().length() == 0) {
             log.warn( "Empty keyword (" + keyword + ") passed, we return empty result !" );
             return result;
         }
 
-        try {
-            keyword = URLEncoder.encode( keyword, "UTF-8" );
-        } catch (UnsupportedEncodingException e) {
-            log.error( "Problems encoding parameter value: " + keyword, e );
-        }
-
-        String req = HtmlUtils.prepareUrl( serviceUrl ) + "getConceptsMatchingKeyword?keyword=" + keyword + "&search_mode=" + searchMode
-                + "&thesaurus_uri=http://www.eionet.europa.eu/gemet/concept/&language=" + language;
+        String req = HTMLUtils.prepareUrl( serviceUrl ) + "getConceptsMatchingKeyword?keyword=" + HTMLUtils.encodeForURL( keyword ) + "&search_mode=" + searchMode
+                + "&thesaurus_uri=" + ConceptType.CONCEPT + "&language=" + language;
 
         if (log.isDebugEnabled()) {
-            log.debug( "Fetching term from: " + req );
+            log.debug( "Fetching terms from: " + req );
+        }
+
+        try {
+            result = (JSONArray) requestJsonUrl( req );
+        } catch (Exception e) {
+            log.error( "The URI seems to have a problem: " + req, e );
+        }
+
+        return result;
+    }
+
+    public JSONArray getRelatedConcepts(String conceptUri, ConceptRelation relation, String language) {
+        JSONArray result = new JSONArray();
+        if (conceptUri == null || conceptUri.trim().length() == 0) {
+            log.warn( "No conceptUri passed (" + conceptUri + "), we return empty result !" );
+            return result;
+        }
+
+        String req = HTMLUtils.prepareUrl( serviceUrl ) + "getRelatedConcepts?concept_uri=" + conceptUri + "&relation_uri=" + HTMLUtils.encodeForURL( relation.toString() )
+                + "&language=" + language;
+
+        if (log.isDebugEnabled()) {
+            log.debug( "Fetching terms from: " + req );
         }
 
         try {

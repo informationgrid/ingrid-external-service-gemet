@@ -17,6 +17,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import de.ingrid.external.ThesaurusService.MatchingType;
+import de.ingrid.external.om.RelatedTerm;
+import de.ingrid.external.om.RelatedTerm.RelationType;
 import de.ingrid.external.om.Term;
 import de.ingrid.external.om.Term.TermType;
 
@@ -105,7 +107,28 @@ public class GEMETServiceTest {
     public void getHierarchyPathToTop() {}
 
     @Test
-    public void getRelatedTermsFromTerm() {}
+    public void getRelatedTermsFromTerm() {
+        // german terms
+
+        // supergroup
+        RelatedTerm[] terms = service.getRelatedTermsFromTerm( "http://www.eionet.europa.eu/gemet/supergroup/4044", Locale.GERMAN );
+        assertThat( terms.length, equalTo( 12 ) );
+        for (RelatedTerm term : terms) {
+            checkTerm( term, null, TermType.NODE_LABEL, null );
+            assertThat( term.getRelationType().equals( RelationType.CHILD ), is( true ) );
+        }
+        terms = service.getRelatedTermsFromTerm( "http://www.eionet.europa.eu/gemet/supergroup/5306", Locale.GERMAN );
+        assertThat( terms.length, equalTo( 2 ) );
+        for (RelatedTerm term : terms) {
+            checkTerm( term, null, TermType.NODE_LABEL, null );
+            assertThat( term.getRelationType().equals( RelationType.CHILD ), is( true ) );
+            assertThat( term.getName(), anyOf( equalTo( "ALLGEMEINE UND ÜBEGREIFENDE BEGRIFFE" ), equalTo( "HILFSBEGRIFFE" ) ) );
+        }
+
+        // INVALID term
+        terms = service.getRelatedTermsFromTerm( "http://www.eionet.europa.eu/gemet/concept/mmmm", Locale.GERMAN );
+        assertThat( terms.length, equalTo( 0 ) );
+    }
 
     @Test
     public void getSimilarTermsFromNames() {

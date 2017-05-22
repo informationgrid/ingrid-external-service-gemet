@@ -69,8 +69,11 @@ public class GEMETClient {
      * http://www.eionet.europa.eu/gemet/webservices#knownrelations
      */
     public enum ConceptRelation {
-        NARROWER("http://www.w3.org/2004/02/skos/core#narrower"), BROADER("http://www.w3.org/2004/02/skos/core#broader"), RELATED("http://www.w3.org/2004/02/skos/core#related"), GROUP(
-                "http://www.eionet.europa.eu/gemet/2004/06/gemet-schema.rdf#group"), GROUP_MEMBER("http://www.eionet.europa.eu/gemet/2004/06/gemet-schema.rdf#groupMember");
+        NARROWER("http://www.w3.org/2004/02/skos/core#narrower"),
+        BROADER("http://www.w3.org/2004/02/skos/core#broader"),
+        RELATED("http://www.w3.org/2004/02/skos/core#related"),
+        GROUP("http://www.eionet.europa.eu/gemet/2004/06/gemet-schema.rdf#group"),
+        GROUP_MEMBER("http://www.eionet.europa.eu/gemet/2004/06/gemet-schema.rdf#groupMember");
 
         private final String value;
 

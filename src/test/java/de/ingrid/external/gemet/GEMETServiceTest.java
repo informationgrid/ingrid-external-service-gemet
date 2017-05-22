@@ -108,10 +108,12 @@ public class GEMETServiceTest {
 
     @Test
     public void getRelatedTermsFromTerm() {
+
         // german terms
 
         // NOTICE: Circular relations !
-        
+
+        // @formatter:off
         //              ZUSATZVERZEICHNISSE
         //                      |
         //          -----------------------------
@@ -125,10 +127,12 @@ public class GEMETServiceTest {
         //     |  -------------------------------  |
         //     |  |                             |  |
         //   Off-Site                          in-situ
+        // @formatter:on
 
         // supergroup
 
-        // "ANTHROPOGENE AKTIVITÄTEN UND PRODUKTE, WIRKUNGEN AUF DIE UMWELT" -> 12 Untergruppen
+        // "ANTHROPOGENE AKTIVITÄTEN UND PRODUKTE, WIRKUNGEN AUF DIE UMWELT" ->
+        // 12 Untergruppen
         RelatedTerm[] terms = service.getRelatedTermsFromTerm( "http://www.eionet.europa.eu/gemet/supergroup/4044", Locale.GERMAN );
         assertThat( terms.length, equalTo( 12 ) );
         for (RelatedTerm term : terms) {
@@ -146,7 +150,7 @@ public class GEMETServiceTest {
         }
 
         // group
-        
+
         // HILFSBEGRIFFE
         terms = service.getRelatedTermsFromTerm( "http://www.eionet.europa.eu/gemet/group/14980", Locale.GERMAN );
         assertThat( terms.length, equalTo( 4 ) );

@@ -1,6 +1,7 @@
 package de.ingrid.external.gemet;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -83,25 +84,59 @@ public class GEMETService implements ThesaurusService {
     }
 
     @Override
-    public TreeTerm[] getHierarchyNextLevel(String arg0, Locale locale) {
-        // TODO Auto-generated method stub
-        return null;
+    public TreeTerm[] getHierarchyNextLevel(String termId, Locale locale) {
+        return getHierarchyNextLevel( null, termId, locale );
+    }
+
+    // NOTICE: Parameter "url" is irrelevant !
+    @Override
+    public TreeTerm[] getHierarchyNextLevel(String url, String termId, Locale locale) {
+        if (termId == null || termId.trim().length() == 0) {
+            log.warn( "No termId passed (" + termId + "), we return empty result !" );
+            return new TreeTerm[] {};
+        }
+
+        String language = getGEMETLanguageFilter( locale );
+
+        // get concept itself, this is the parent
+        JSONObject parent = gemetClient.getConceptAsJSON( termId, language );
+
+        // get direct children
+        List<JSONArray> childrenList = gemetClient.getChildConcepts( termId, language );
+
+        // get children of children (next hierarchy level) and create TreeTerms
+        List<TreeTerm> resultList = new ArrayList<TreeTerm>();
+        for (JSONArray children : childrenList) {
+            Iterator<JSONObject> childrenIterator = children.iterator();
+            while (childrenIterator.hasNext()) {
+
+                // map basic TreeTerm
+                TreeTerm resultTreeTerm = gemetMapper.mapToTreeTerm( childrenIterator.next(), null, null );
+
+                // add parent to TreeTerm
+                gemetMapper.addParentsToTreeTerm( resultTreeTerm, JSONUtils.toJSONArray( parent ) );
+
+                // get children and add to TreeTerm
+                List<JSONArray> subChildrenList = gemetClient.getChildConcepts( resultTreeTerm.getId(), language );
+                for (JSONArray subChildren : subChildrenList) {
+                    gemetMapper.addChildrenToTreeTerm( resultTreeTerm, subChildren );
+                }
+
+                resultList.add( resultTreeTerm );
+            }
+        }
+
+        return resultList.toArray( new TreeTerm[resultList.size()] );
     }
 
     @Override
-    public TreeTerm[] getHierarchyNextLevel(String arg0, String arg1, Locale locale) {
-        // TODO Auto-generated method stub
-        return null;
+    public TreeTerm getHierarchyPathToTop(String termId, Locale locale) {
+        return getHierarchyPathToTop( null, termId, locale );
     }
 
+    // NOTICE: Parameter "url" is irrelevant !
     @Override
-    public TreeTerm getHierarchyPathToTop(String arg0, Locale locale) {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public TreeTerm getHierarchyPathToTop(String arg0, String arg1, Locale locale) {
+    public TreeTerm getHierarchyPathToTop(String url, String termId, Locale locale) {
         // TODO Auto-generated method stub
         return null;
     }

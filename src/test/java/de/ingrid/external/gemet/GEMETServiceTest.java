@@ -21,6 +21,7 @@ import de.ingrid.external.om.RelatedTerm;
 import de.ingrid.external.om.RelatedTerm.RelationType;
 import de.ingrid.external.om.Term;
 import de.ingrid.external.om.Term.TermType;
+import de.ingrid.external.om.TreeTerm;
 
 public class GEMETServiceTest {
 
@@ -101,7 +102,65 @@ public class GEMETServiceTest {
     }
 
     @Test
-    public void getHierarchyNextLevel() {}
+    public void getHierarchyNextLevel() {
+
+        // german terms
+
+        // NOTICE: Circular relations !
+
+        // @formatter:off
+        //              ZUSATZVERZEICHNISSE
+        //                      |
+        //          -----------------------------
+        //          |                           |
+        //    HILFSBEGRIFFE            ALLGEMEINE UND ÜBEGREIFENDE BEGRIFFE
+        //          |
+        //     -------------------------------------
+        //     |                |                  |
+        //     |              Thema                |
+        //     |                |                  |
+        //     |  -------------------------------  |
+        //     |  |                             |  |
+        //   Off-Site                          in-situ
+        // @formatter:on
+
+        // supergroup: ZUSATZVERZEICHNISSE -> 2 Untergruppen
+        TreeTerm[] terms = service.getHierarchyNextLevel( "http://www.eionet.europa.eu/gemet/supergroup/5306", Locale.GERMAN );
+        assertThat( terms.length, equalTo( 2 ) );
+        for (TreeTerm term : terms) {
+            assertThat( term.getType(), is( TermType.NODE_LABEL ) );
+            assertThat( term.getParents().get( 0 ).getId(), equalTo( "http://www.eionet.europa.eu/gemet/supergroup/5306" ) );
+            assertThat( term.getId(), anyOf( containsString( "group/10117" ), containsString( "group/14980" ) ) );
+            assertThat( term.getName(), anyOf( equalTo( "ALLGEMEINE UND ÜBEGREIFENDE BEGRIFFE" ), equalTo( "HILFSBEGRIFFE" ) ) );
+            assertThat( term.getChildren().size(), anyOf( is( 7 ), is( 3 ) ) );
+        }
+
+        // group: HILFSBEGRIFFE -> 3 child concepts
+        terms = service.getHierarchyNextLevel( "http://www.eionet.europa.eu/gemet/group/14980", Locale.GERMAN );
+        assertThat( terms.length, equalTo( 3 ) );
+        for (TreeTerm term : terms) {
+            assertThat( term.getType(), is( TermType.DESCRIPTOR ) );
+            assertThat( term.getParents().get( 0 ).getId(), equalTo( "http://www.eionet.europa.eu/gemet/group/14980" ) );
+            assertThat( term.getId(), anyOf( containsString( "concept/4359" ), containsString( "concept/5825" ), containsString( "concept/14848" ) ) );
+            assertThat( term.getName(), anyOf( equalTo( "in-situ" ), equalTo( "Off-Site" ), equalTo( "Thema" ) ) );
+            if (term.getId().contains( "concept/14848" )) {
+                assertThat( term.getChildren().size(), is( 2 ) );
+            } else {
+                assertThat( term.getChildren(), equalTo( null ) );
+            }
+        }
+
+        // concept: Thema -> 2 child concepts
+        terms = service.getHierarchyNextLevel( "http://www.eionet.europa.eu/gemet/concept/14848", Locale.GERMAN );
+        assertThat( terms.length, equalTo( 2 ) );
+        for (TreeTerm term : terms) {
+            assertThat( term.getType(), is( TermType.DESCRIPTOR ) );
+            assertThat( term.getParents().get( 0 ).getId(), equalTo( "http://www.eionet.europa.eu/gemet/concept/14848" ) );
+            assertThat( term.getId(), anyOf( containsString( "concept/4359" ), containsString( "concept/5825" ) ) );
+            assertThat( term.getName(), anyOf( equalTo( "in-situ" ), equalTo( "Off-Site" ) ) );
+            assertThat( term.getChildren(), equalTo( null ) );
+        }
+    }
 
     @Test
     public void getHierarchyPathToTop() {}

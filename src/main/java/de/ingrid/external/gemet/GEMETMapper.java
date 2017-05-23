@@ -16,8 +16,10 @@ import de.ingrid.external.om.RelatedTerm;
 import de.ingrid.external.om.RelatedTerm.RelationType;
 import de.ingrid.external.om.Term;
 import de.ingrid.external.om.Term.TermType;
+import de.ingrid.external.om.TreeTerm;
 import de.ingrid.external.om.impl.RelatedTermImpl;
 import de.ingrid.external.om.impl.TermImpl;
+import de.ingrid.external.om.impl.TreeTermImpl;
 
 public class GEMETMapper {
 
@@ -84,6 +86,94 @@ public class GEMETMapper {
     }
 
     /**
+     * Creates an InGrid RelatedTerm from the given JSON object.
+     * 
+     * @param json
+     *            JSON from response
+     * @param conceptRelation
+     *            the relation type from GEMET API
+     * @return the InGrid API RelatedTerm
+     */
+    public RelatedTerm mapToRelatedTerm(JSONObject json, ConceptRelation conceptRelation) {
+        RelatedTerm outTerm = new RelatedTermImpl();
+        mapToTerm( json, outTerm );
+        outTerm.setRelationType( getRelationTypeFromConceptRelation( conceptRelation ) );
+
+        return outTerm;
+    }
+
+    /**
+     * Create an InGrid API TreeTerm.
+     * 
+     * @param node
+     *            the JSON concept mapped to a TreeTerm
+     * @param parents
+     *            parents of TreeTerm, pass null if no parents
+     * @param children
+     *            children of TreeTerm, pass null if no children
+     * @return the TreeTerm
+     */
+    public TreeTerm mapToTreeTerm(JSONObject node, JSONArray parents, JSONArray children) {
+        TreeTerm outTerm = new TreeTermImpl();
+        mapToTerm( node, outTerm );
+
+        if (parents != null) {
+            addParentsToTreeTerm( outTerm, parents );
+        }
+
+        if (children != null) {
+            addChildrenToTreeTerm( outTerm, children );
+        }
+
+        return outTerm;
+    }
+
+    public TreeTerm addParentsToTreeTerm(TreeTerm node, JSONArray parents) {
+        return addToTreeTerm( node, parents, true );
+    }
+
+    public TreeTerm addChildrenToTreeTerm(TreeTerm node, JSONArray children) {
+        return addToTreeTerm( node, children, false );
+    }
+
+    /**
+     * Map concepts to TreeTerms and add to given TreeTerm as parents or
+     * children.
+     * 
+     * @param node
+     *            TreeTerm where to add other TreeTerms
+     * @param concepts
+     *            concepts added as TreeTerms
+     * @param addAsParent
+     *            true=add as parents, false= add as children
+     * @return the given node for further processing
+     */
+    private TreeTerm addToTreeTerm(TreeTerm node, JSONArray concepts, boolean addAsParent) {
+        TreeTerm termToAdd = null;
+        Iterator<JSONObject> iterator = concepts.iterator();
+        while (iterator.hasNext()) {
+            termToAdd = new TreeTermImpl();
+            mapToTerm( iterator.next(), termToAdd );
+            if (addAsParent)
+                addParentTerm( node, termToAdd );
+            else
+                addChildTerm( node, termToAdd );
+        }
+
+        return node;
+    }
+
+    private void addParentTerm(TreeTerm term, TreeTerm parentTerm) {
+        term.addParent( parentTerm );
+        parentTerm.addChild( term );
+    }
+
+    private void addChildTerm(TreeTerm term, TreeTerm childTerm) {
+        term.addChild( childTerm );
+        childTerm.addParent( term );
+    }
+
+    /**
      * Creates a Term from the given RDF model.
      * 
      * @param res
@@ -128,31 +218,14 @@ public class GEMETMapper {
      *            JSON from response
      * @param termToMapTo
      *            InGrid Term to map JSON data to, not null !
+     * @return the termToMapTo for further processing
      */
-    private void mapToTerm(JSONObject json, Term termToMapTo) {
+    private Term mapToTerm(JSONObject json, Term termToMapTo) {
         termToMapTo.setId( JSONUtils.getId( json ) );
-
-        String name = JSONUtils.getName( json );
-        termToMapTo.setName( name );
-
+        termToMapTo.setName( JSONUtils.getName( json ) );
         termToMapTo.setType( getTermTypeFromJSON( JSONUtils.getType( json ) ) );
-    }
 
-    /**
-     * Creates an InGrid RelatedTerm from the given JSON object.
-     * 
-     * @param json
-     *            JSON from response
-     * @param conceptRelation
-     *            the relation type from GEMET API
-     * @return the InGrid API RelatedTerm
-     */
-    public RelatedTerm mapToRelatedTerm(JSONObject json, ConceptRelation conceptRelation) {
-        RelatedTerm outTerm = new RelatedTermImpl();
-        mapToTerm( json, outTerm );
-        outTerm.setRelationType( getRelationTypeFromConceptRelation( conceptRelation ) );
-
-        return outTerm;
+        return termToMapTo;
     }
 
     private RelationType getRelationTypeFromConceptRelation(ConceptRelation conceptRelation) {

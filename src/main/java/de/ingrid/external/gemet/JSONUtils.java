@@ -1,5 +1,6 @@
 package de.ingrid.external.gemet;
 
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 public class JSONUtils {
@@ -14,5 +15,12 @@ public class JSONUtils {
 
     public static String getType(JSONObject json) {
         return (String) json.get( "thesaurus" );
+    }
+
+    public static JSONArray toJSONArray(JSONObject jsonObj) {
+        JSONArray jsonArray = new JSONArray();
+        jsonArray.add( jsonObj );
+        
+        return jsonArray;
     }
 }

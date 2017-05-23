@@ -215,6 +215,19 @@ public class GEMETClient {
         return result;
     }
 
+    public List<JSONArray> getChildConcepts(String conceptUri, String language) {
+        // child relations
+        ConceptRelation[] childRelations = new ConceptRelation[] { ConceptRelation.NARROWER, ConceptRelation.GROUP_MEMBER };
+
+        // get children
+        List<JSONArray> childrenList = new ArrayList<JSONArray>();
+        for (ConceptRelation childRelation : childRelations) {
+            childrenList.add( getRelatedConcepts( conceptUri, childRelation, language ) );
+        }
+
+        return childrenList;
+    }
+
     public JSONArray getRelatedConcepts(String conceptUri, ConceptRelation relation, String language) {
         JSONArray result = new JSONArray();
         if (conceptUri == null || conceptUri.trim().length() == 0) {

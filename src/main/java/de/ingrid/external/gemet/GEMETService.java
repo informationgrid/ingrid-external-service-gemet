@@ -14,6 +14,7 @@ import com.hp.hpl.jena.rdf.model.Resource;
 
 import de.ingrid.external.ThesaurusService;
 import de.ingrid.external.gemet.GEMETClient.ConceptRelation;
+import de.ingrid.external.gemet.GEMETClient.ConceptType;
 import de.ingrid.external.gemet.GEMETClient.MatchingConceptsSearchMode;
 import de.ingrid.external.om.RelatedTerm;
 import de.ingrid.external.om.Term;
@@ -91,7 +92,11 @@ public class GEMETService implements ThesaurusService {
     // NOTICE: Parameter "url" is irrelevant !
     @Override
     public TreeTerm[] getHierarchyNextLevel(String url, String termId, Locale locale) {
-        if (termId == null || termId.trim().length() == 0) {
+        if (termId == null) {
+            return getHierarchyTopLevel( locale );
+        }
+
+        if (termId.trim().length() == 0) {
             log.warn( "No termId passed (" + termId + "), we return empty result !" );
             return new TreeTerm[] {};
         }
@@ -124,6 +129,34 @@ public class GEMETService implements ThesaurusService {
 
                 resultList.add( resultTreeTerm );
             }
+        }
+
+        return resultList.toArray( new TreeTerm[resultList.size()] );
+    }
+
+    private TreeTerm[] getHierarchyTopLevel(Locale locale) {
+        String language = getGEMETLanguageFilter( locale );
+
+        // get top supergroups
+        JSONArray children = gemetClient.getTopmostConcepts( ConceptType.SOUPERGROUP, language );
+
+        // get children (next hierarchy level) and create TreeTerms
+        List<TreeTerm> resultList = new ArrayList<TreeTerm>();
+        Iterator<JSONObject> childrenIterator = children.iterator();
+        while (childrenIterator.hasNext()) {
+
+            // map basic TreeTerm
+            TreeTerm resultTreeTerm = gemetMapper.mapToTreeTerm( childrenIterator.next(), null, null );
+            
+            // NOTICE: Do not set parents in TreeTerm, stays null cause is top term
+
+            // get children and add to TreeTerm
+            List<JSONArray> subChildrenList = gemetClient.getChildConcepts( resultTreeTerm.getId(), language );
+            for (JSONArray subChildren : subChildrenList) {
+                gemetMapper.addChildrenToTreeTerm( resultTreeTerm, subChildren );
+            }
+
+            resultList.add( resultTreeTerm );
         }
 
         return resultList.toArray( new TreeTerm[resultList.size()] );

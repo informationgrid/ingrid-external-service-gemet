@@ -124,8 +124,23 @@ public class GEMETServiceTest {
         //   Off-Site                          in-situ
         // @formatter:on
 
+        // TOP TERMS
+        TreeTerm[] terms = service.getHierarchyNextLevel( null, Locale.GERMAN );
+        assertThat( terms.length, equalTo( 4 ) );
+        for (TreeTerm term : terms) {
+            assertThat( term.getType(), is( TermType.NODE_LABEL ) );
+            assertThat( term.getParents(), equalTo( null ) );
+            assertThat( term.getId(),
+                    anyOf( containsString( "supergroup/4044" ), containsString( "supergroup/5499" ), containsString( "supergroup/2894" ), containsString( "supergroup/5306" ) ) );
+            assertThat(
+                    term.getName(),
+                    anyOf( equalTo( "ANTHROPOGENE AKTIVITÄTEN UND PRODUKTE, WIRKUNGEN AUF DIE UMWELT" ), equalTo( "NATÜRLICHE UND ANTHROPOGEN ÜBERFORMTE UMWELT" ),
+                            equalTo( "SOZIALE ASPEKTE, UMWELTPOLITISCHE MASSNAHMEN" ), equalTo( "ZUSATZVERZEICHNISSE" ) ) );
+            assertThat( term.getChildren().size(), anyOf( is( 12 ), is( 9 ), is( 2 ) ) );
+        }
+
         // supergroup: ZUSATZVERZEICHNISSE -> 2 Untergruppen
-        TreeTerm[] terms = service.getHierarchyNextLevel( "http://www.eionet.europa.eu/gemet/supergroup/5306", Locale.GERMAN );
+        terms = service.getHierarchyNextLevel( "http://www.eionet.europa.eu/gemet/supergroup/5306", Locale.GERMAN );
         assertThat( terms.length, equalTo( 2 ) );
         for (TreeTerm term : terms) {
             assertThat( term.getType(), is( TermType.NODE_LABEL ) );

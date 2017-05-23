@@ -228,6 +228,24 @@ public class GEMETClient {
         return childrenList;
     }
 
+    public JSONArray getTopmostConcepts(ConceptType thesaurusUri, String language) {
+        JSONArray result = new JSONArray();
+
+        String req = HTMLUtils.prepareUrl( serviceUrl ) + "getTopmostConcepts?thesaurus_uri=" + thesaurusUri + "&language=" + language;
+
+        if (log.isDebugEnabled()) {
+            log.debug( "Fetching terms from: " + req );
+        }
+
+        try {
+            result = (JSONArray) requestJsonUrl( req );
+        } catch (Exception e) {
+            log.error( "The URI seems to have a problem: " + req, e );
+        }
+
+        return result;
+    }
+
     public JSONArray getRelatedConcepts(String conceptUri, ConceptRelation relation, String language) {
         JSONArray result = new JSONArray();
         if (conceptUri == null || conceptUri.trim().length() == 0) {

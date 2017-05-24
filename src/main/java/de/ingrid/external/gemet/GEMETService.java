@@ -39,6 +39,7 @@ public class GEMETService implements ThesaurusService {
         this.doRDF = doRDF;
     }
 
+    // Init Method is called by the Spring Framework on initialization
     public void init() throws Exception {
         ResourceBundle gemetProps = ResourceBundle.getBundle( "gemet" );
 

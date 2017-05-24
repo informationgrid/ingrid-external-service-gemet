@@ -215,6 +215,17 @@ public class GEMETClient {
         return result;
     }
 
+    /**
+     * Get children of the given concept. NOTICE: If the concept is a group we
+     * return only children having no broader concept, meaning the only parent
+     * is the group !
+     * 
+     * @param conceptUri
+     *            parent
+     * @param language
+     *            children in which language
+     * @return list of children
+     */
     public List<JSONArray> getChildConcepts(String conceptUri, String language) {
         // child relations
         ConceptRelation[] relations = new ConceptRelation[] { ConceptRelation.NARROWER, ConceptRelation.GROUP_MEMBER };
@@ -222,10 +233,39 @@ public class GEMETClient {
         // get children
         List<JSONArray> conceptList = new ArrayList<JSONArray>();
         for (ConceptRelation relation : relations) {
-            conceptList.add( getRelatedConcepts( conceptUri, relation, language ) );
+            JSONArray concepts = getRelatedConcepts( conceptUri, relation, language );
+
+            // we have to filter GROUP_MEMBER !
+            // we use only those having NO BROADER concept meaning their only
+            // parent is the group !
+            if (relation == ConceptRelation.GROUP_MEMBER && concepts.size() > 0) {
+                JSONArray groupConcepts = new JSONArray();
+                for (Object concept : concepts) {
+                    if (!hasRelation( JSONUtils.getId( (JSONObject) concept ), ConceptRelation.BROADER, language )) {
+                        groupConcepts.add( concept );
+                    }
+                }
+                concepts = groupConcepts;
+            }
+
+            conceptList.add( concepts );
         }
 
         return conceptList;
+    }
+
+    /**
+     * Check whether the given concept has the given relation to any object.
+     * 
+     * @param conceptUri
+     *            relation from
+     * @param relation
+     *            relation type
+     * @return true or false
+     */
+    private boolean hasRelation(String conceptUri, ConceptRelation relation, String language) {
+        JSONArray concepts = getRelatedConcepts( conceptUri, ConceptRelation.BROADER, language );
+        return (concepts.size() > 0);
     }
 
     public List<JSONArray> getParentConcepts(String conceptUri, String language) {

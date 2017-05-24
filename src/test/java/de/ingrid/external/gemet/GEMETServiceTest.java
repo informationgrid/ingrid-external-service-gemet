@@ -105,10 +105,6 @@ public class GEMETServiceTest {
     @Test
     public void getHierarchyNextLevel() {
 
-        // german terms
-
-        // NOTICE: Circular relations !
-
         // @formatter:off
         //              ZUSATZVERZEICHNISSE
         //                      |
@@ -140,7 +136,7 @@ public class GEMETServiceTest {
             assertThat( term.getChildren().size(), anyOf( is( 12 ), is( 9 ), is( 2 ) ) );
         }
 
-        // supergroup: ZUSATZVERZEICHNISSE -> 2 Untergruppen
+        // supergroup: ZUSATZVERZEICHNISSE -> 2 Untergruppen (type group)
         terms = service.getHierarchyNextLevel( "http://www.eionet.europa.eu/gemet/supergroup/5306", Locale.GERMAN );
         assertThat( terms.length, equalTo( 2 ) );
         for (TreeTerm term : terms) {
@@ -148,22 +144,21 @@ public class GEMETServiceTest {
             assertThat( term.getParents().get( 0 ).getId(), equalTo( "http://www.eionet.europa.eu/gemet/supergroup/5306" ) );
             assertThat( term.getId(), anyOf( containsString( "group/10117" ), containsString( "group/14980" ) ) );
             assertThat( term.getName(), anyOf( equalTo( "ALLGEMEINE UND ÜBEGREIFENDE BEGRIFFE" ), equalTo( "HILFSBEGRIFFE" ) ) );
-            assertThat( term.getChildren().size(), anyOf( is( 7 ), is( 3 ) ) );
+            // only group members which have NO broader concept !!!
+            assertThat( term.getChildren().size(), anyOf( is( 2 ), is( 1 ) ) );
         }
 
-        // group: HILFSBEGRIFFE -> 3 child concepts
+        // group: HILFSBEGRIFFE -> 3 group members, but only 1 member has NO
+        // broader concept, meaning the only parent is the group !
         terms = service.getHierarchyNextLevel( "http://www.eionet.europa.eu/gemet/group/14980", Locale.GERMAN );
-        assertThat( terms.length, equalTo( 3 ) );
+        // only group members which have NO broader concept !!!
+        assertThat( terms.length, equalTo( 1 ) );
         for (TreeTerm term : terms) {
             assertThat( term.getType(), is( TermType.DESCRIPTOR ) );
             assertThat( term.getParents().get( 0 ).getId(), equalTo( "http://www.eionet.europa.eu/gemet/group/14980" ) );
-            assertThat( term.getId(), anyOf( containsString( "concept/4359" ), containsString( "concept/5825" ), containsString( "concept/14848" ) ) );
-            assertThat( term.getName(), anyOf( equalTo( "in-situ" ), equalTo( "Off-Site" ), equalTo( "Thema" ) ) );
-            if (term.getId().contains( "concept/14848" )) {
-                assertThat( term.getChildren().size(), is( 2 ) );
-            } else {
-                assertThat( term.getChildren(), equalTo( null ) );
-            }
+            assertThat( term.getId(), containsString( "concept/14848" ) );
+            assertThat( term.getName(), equalTo( "Thema" ) );
+            assertThat( term.getChildren().size(), is( 2 ) );
         }
 
         // concept: Thema -> 2 child concepts

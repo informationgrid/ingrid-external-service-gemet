@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
+import java.util.Stack;
 
 import org.apache.log4j.Logger;
 import org.json.simple.JSONArray;
@@ -147,8 +148,9 @@ public class GEMETService implements ThesaurusService {
 
             // map basic TreeTerm
             TreeTerm resultTreeTerm = gemetMapper.mapToTreeTerm( childrenIterator.next(), null, null );
-            
-            // NOTICE: Do not set parents in TreeTerm, stays null cause is top term
+
+            // NOTICE: Do not set parents in TreeTerm, stays null cause is top
+            // term
 
             // get children and add to TreeTerm
             List<JSONArray> subChildrenList = gemetClient.getChildConcepts( resultTreeTerm.getId(), language );
@@ -170,8 +172,63 @@ public class GEMETService implements ThesaurusService {
     // NOTICE: Parameter "url" is irrelevant !
     @Override
     public TreeTerm getHierarchyPathToTop(String url, String termId, Locale locale) {
-        // TODO Auto-generated method stub
-        return null;
+        String language = getGEMETLanguageFilter( locale );
+
+        // get concept and map to TreeTerm
+        JSONObject inConcept = gemetClient.getConceptAsJSON( termId, language );
+        TreeTerm resultTreeTerm = gemetMapper.mapToTreeTerm( inConcept, null, null );
+
+        // set parents up to top. We only produce ONE PATH, so no multiple
+        // parents are set !
+        // We process "stack" until stack is empty
+
+        Stack<TreeTerm> parentStack = new Stack<TreeTerm>();
+        parentStack.add( resultTreeTerm );
+
+        while (!parentStack.empty()) {
+            TreeTerm currentTerm = parentStack.pop();
+            if (currentTerm.getParents() == null) {
+                // no processed parents yet, add first parent found !
+                processParentsOfTerm( currentTerm, language, true );
+                // check parents for null, may be top node
+                if (currentTerm.getParents() != null) {
+                    parentStack.addAll( currentTerm.getParents() );
+                }
+            }
+        }
+
+        return resultTreeTerm;
+    }
+
+    /**
+     * Determine parents of passed TreeTerm and set them in TreeTerm. Only first
+     * parent can be set.
+     * 
+     * @param termToProcess
+     *            TreeTerm without parents but id
+     * @param language
+     *            fetch parents in this language
+     * @param onlyFirstParent
+     *            pass true if only the first parent should be added to the
+     *            parents list of the TreeTerm to get only one path to top !
+     * @return the passed TreeTerm with parents !
+     */
+    private TreeTerm processParentsOfTerm(TreeTerm termToProcess, String language, boolean onlyFirstParent) {
+        // get parents
+        List<JSONArray> parentsList = gemetClient.getParentConcepts( termToProcess.getId(), language );
+        for (JSONArray parents : parentsList) {
+            if (onlyFirstParent) {
+                // only first parent should be set
+                if (parents.size() > 0) {
+                    gemetMapper.addParentToTreeTerm( termToProcess, (JSONObject) parents.get( 0 ) );
+                    break;
+                }
+            } else {
+                gemetMapper.addParentsToTreeTerm( termToProcess, parents );
+            }
+        }
+
+        return termToProcess;
     }
 
     @Override

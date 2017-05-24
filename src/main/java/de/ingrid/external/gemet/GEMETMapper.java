@@ -128,6 +128,10 @@ public class GEMETMapper {
         return outTerm;
     }
 
+    public TreeTerm addParentToTreeTerm(TreeTerm node, JSONObject parent) {
+        return addToTreeTerm( node, JSONUtils.toJSONArray( parent ), true );
+    }
+
     public TreeTerm addParentsToTreeTerm(TreeTerm node, JSONArray parents) {
         return addToTreeTerm( node, parents, true );
     }

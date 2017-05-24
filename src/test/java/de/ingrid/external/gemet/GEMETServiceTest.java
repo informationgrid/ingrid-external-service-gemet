@@ -11,6 +11,7 @@ import static org.hamcrest.core.Is.is;
 import static org.hamcrest.core.IsNot.not;
 import static org.hamcrest.core.IsNull.nullValue;
 
+import java.util.List;
 import java.util.Locale;
 
 import org.junit.BeforeClass;
@@ -178,7 +179,67 @@ public class GEMETServiceTest {
     }
 
     @Test
-    public void getHierarchyPathToTop() {}
+    public void getHierarchyPathToTop() {
+
+        // term with only group parent
+        TreeTerm term = service.getHierarchyPathToTop( "http://www.eionet.europa.eu/gemet/concept/11089", Locale.GERMAN );
+        checkTerm( term, "http://www.eionet.europa.eu/gemet/concept/11089", TermType.DESCRIPTOR, "Handelsaktivität" );
+        assertThat( term.getChildren(), equalTo( null ) );
+
+        // parent 1. level
+        List<TreeTerm> parents = term.getParents();
+        assertThat( parents.size(), is( 1 ) );
+        assertThat( parents.get( 0 ).getId(), equalTo( "http://www.eionet.europa.eu/gemet/group/10117" ) );
+        assertThat( parents.get( 0 ).getName(), equalTo( "ALLGEMEINE UND ÜBEGREIFENDE BEGRIFFE" ) );
+        assertThat( parents.get( 0 ).getChildren().get( 0 ).getId(), equalTo( "http://www.eionet.europa.eu/gemet/concept/11089" ) );
+        // parent 2. level (top node)
+        parents = parents.get( 0 ).getParents();
+        assertThat( parents.size(), is( 1 ) );
+        assertThat( parents.get( 0 ).getId(), equalTo( "http://www.eionet.europa.eu/gemet/supergroup/5306" ) );
+        assertThat( parents.get( 0 ).getName(), equalTo( "ZUSATZVERZEICHNISSE" ) );
+        assertThat( parents.get( 0 ).getParents(), equalTo( null ) );
+        assertThat( parents.get( 0 ).getChildren().get( 0 ).getId(), equalTo( "http://www.eionet.europa.eu/gemet/group/10117" ) );
+
+        // NOTICE: Circular relations !
+
+        // @formatter:off
+        // SOZIALE ASPEKTE,...   ZUSATZVERZEICHNISSE
+        //      |                  |
+        // WISSEN, ...           HILFSBEGRIFFE
+        //      |                  |
+        //      |             ----------
+        //      |             |        |
+        //  Kenngröße         |      Thema
+        //      |             |        |
+        //      -----------------------|
+        //                    |
+        //                 Off-Site
+        // @formatter:on
+
+        // "Off-Site"
+        term = service.getHierarchyPathToTop( "http://www.eionet.europa.eu/gemet/concept/5825", Locale.GERMAN );
+        checkTerm( term, "http://www.eionet.europa.eu/gemet/concept/5825", TermType.DESCRIPTOR, "Off-Site" );
+        assertThat( term.getChildren(), equalTo( null ) );
+        // parent 1. level
+        parents = term.getParents();
+        assertThat( parents.size(), is( 1 ) );
+        assertThat( parents.get( 0 ).getId(), equalTo( "http://www.eionet.europa.eu/gemet/concept/6033" ) );
+        assertThat( parents.get( 0 ).getName(), equalTo( "Kenngröße" ) );
+        assertThat( parents.get( 0 ).getChildren().get( 0 ).getId(), equalTo( "http://www.eionet.europa.eu/gemet/concept/5825" ) );
+        // parent 2. level
+        parents = parents.get( 0 ).getParents();
+        assertThat( parents.size(), is( 1 ) );
+        assertThat( parents.get( 0 ).getId(), equalTo( "http://www.eionet.europa.eu/gemet/group/7136" ) );
+        assertThat( parents.get( 0 ).getName(), equalTo( "WISSEN, WISSENSCHAFT, FORSCHUNG, INFORMATIONSGEWINNUNG" ) );
+        assertThat( parents.get( 0 ).getChildren().get( 0 ).getId(), equalTo( "http://www.eionet.europa.eu/gemet/concept/6033" ) );
+        // parent 3. level (top node)
+        parents = parents.get( 0 ).getParents();
+        assertThat( parents.size(), is( 1 ) );
+        assertThat( parents.get( 0 ).getId(), equalTo( "http://www.eionet.europa.eu/gemet/supergroup/2894" ) );
+        assertThat( parents.get( 0 ).getName(), equalTo( "SOZIALE ASPEKTE, UMWELTPOLITISCHE MASSNAHMEN" ) );
+        assertThat( parents.get( 0 ).getParents(), equalTo( null ) );
+        assertThat( parents.get( 0 ).getChildren().get( 0 ).getId(), equalTo( "http://www.eionet.europa.eu/gemet/group/7136" ) );
+    }
 
     @Test
     public void getRelatedTermsFromTerm() {

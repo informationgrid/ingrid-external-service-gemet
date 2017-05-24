@@ -217,15 +217,34 @@ public class GEMETClient {
 
     public List<JSONArray> getChildConcepts(String conceptUri, String language) {
         // child relations
-        ConceptRelation[] childRelations = new ConceptRelation[] { ConceptRelation.NARROWER, ConceptRelation.GROUP_MEMBER };
+        ConceptRelation[] relations = new ConceptRelation[] { ConceptRelation.NARROWER, ConceptRelation.GROUP_MEMBER };
 
         // get children
-        List<JSONArray> childrenList = new ArrayList<JSONArray>();
-        for (ConceptRelation childRelation : childRelations) {
-            childrenList.add( getRelatedConcepts( conceptUri, childRelation, language ) );
+        List<JSONArray> conceptList = new ArrayList<JSONArray>();
+        for (ConceptRelation relation : relations) {
+            conceptList.add( getRelatedConcepts( conceptUri, relation, language ) );
         }
 
-        return childrenList;
+        return conceptList;
+    }
+
+    public List<JSONArray> getParentConcepts(String conceptUri, String language) {
+        // parent relations
+        ConceptRelation[] relations = new ConceptRelation[] { ConceptRelation.BROADER, ConceptRelation.GROUP };
+
+        // get parents
+        List<JSONArray> conceptList = new ArrayList<JSONArray>();
+        for (ConceptRelation relation : relations) {
+            JSONArray concepts = getRelatedConcepts( conceptUri, relation, language );
+            conceptList.add( concepts );
+
+            // only fetch GROUP if no BROADER relations found !
+            if (relation == ConceptRelation.BROADER && concepts.size() > 0) {
+                break;
+            }
+        }
+
+        return conceptList;
     }
 
     public JSONArray getTopmostConcepts(ConceptType thesaurusUri, String language) {

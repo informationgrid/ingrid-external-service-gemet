@@ -89,12 +89,9 @@ public class GEMETClient {
 
     /** The URL to the service to use */
     private String serviceUrl;
-    /** The URL to the thesaurus to use, passed as parameter in request */
-    private String thesaurusUrl;
 
     public GEMETClient(ResourceBundle gemetProps) {
         this.serviceUrl = gemetProps.getString( "service.url" );
-        this.thesaurusUrl = gemetProps.getString( "service.thesaurus_uri" );
     }
 
     public Resource getConceptAsRDF(String conceptUri) {

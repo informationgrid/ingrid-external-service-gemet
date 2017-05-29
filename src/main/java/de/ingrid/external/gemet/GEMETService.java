@@ -19,7 +19,9 @@ import de.ingrid.external.gemet.GEMETClient.ConceptType;
 import de.ingrid.external.gemet.GEMETClient.MatchingConceptsSearchMode;
 import de.ingrid.external.om.RelatedTerm;
 import de.ingrid.external.om.Term;
+import de.ingrid.external.om.Term.TermType;
 import de.ingrid.external.om.TreeTerm;
+import de.ingrid.external.om.impl.TreeTermImpl;
 
 public class GEMETService implements ThesaurusService {
 
@@ -66,6 +68,9 @@ public class GEMETService implements ThesaurusService {
 
         String language = getGEMETLanguageFilter( locale );
         MatchingConceptsSearchMode gemetSearchMode = getGEMETSearchMode( matching );
+        // we ignore passed search mode and always search concepts containing
+        // the query
+        gemetSearchMode = MatchingConceptsSearchMode.CONTAINS;
 
         List<JSONArray> responseList = new ArrayList<JSONArray>();
 
@@ -107,6 +112,7 @@ public class GEMETService implements ThesaurusService {
 
         // get concept itself, this is the parent
         JSONObject parent = gemetClient.getConceptAsJSON( termId, language );
+        JSONArray parentArray = JSONUtils.toJSONArray( parent );
 
         // get direct children
         List<JSONArray> childrenList = gemetClient.getChildConcepts( termId, language );
@@ -121,12 +127,22 @@ public class GEMETService implements ThesaurusService {
                 TreeTerm resultTreeTerm = gemetMapper.mapToTreeTerm( childrenIterator.next(), null, null );
 
                 // add parent to TreeTerm
-                gemetMapper.addParentsToTreeTerm( resultTreeTerm, JSONUtils.toJSONArray( parent ) );
+                gemetMapper.addParentsToTreeTerm( resultTreeTerm, parentArray );
 
-                // get children and add to TreeTerm
-                List<JSONArray> subChildrenList = gemetClient.getChildConcepts( resultTreeTerm.getId(), language );
-                for (JSONArray subChildren : subChildrenList) {
-                    gemetMapper.addChildrenToTreeTerm( resultTreeTerm, subChildren );
+                // get next hierarchy level (subchildren) and add to TreeTerm !
+                // This is time consuming, we only do this for terms where we do
+                // not know whether there are children !
+                // For GROUPS OR SOUPERGROUPS we just add DUMMY CHILD to
+                // indicate children, so we reduce requests !
+                if (TermType.NODE_LABEL.equals( resultTreeTerm.getType() )) {
+                    // set DUMMY CHILD to indicate children
+                    resultTreeTerm.addChild( new TreeTermImpl() );
+
+                } else {
+                    List<JSONArray> subChildrenList = gemetClient.getChildConcepts( resultTreeTerm.getId(), language );
+                    for (JSONArray subChildren : subChildrenList) {
+                        gemetMapper.addChildrenToTreeTerm( resultTreeTerm, subChildren );
+                    }
                 }
 
                 resultList.add( resultTreeTerm );
@@ -153,12 +169,20 @@ public class GEMETService implements ThesaurusService {
             // NOTICE: Do not set parents in TreeTerm, stays null cause is top
             // term
 
+            // get next hierarchy level (subchildren) and add to TreeTerm !
+            // For GROUPS OR SOUPERGROUPS we just add DUMMY CHILD to indicate
+            // children, so we reduce requests !
+            resultTreeTerm.addChild( new TreeTermImpl() );
+
+// @formatter:off
+/*
             // get children and add to TreeTerm
             List<JSONArray> subChildrenList = gemetClient.getChildConcepts( resultTreeTerm.getId(), language );
             for (JSONArray subChildren : subChildrenList) {
                 gemetMapper.addChildrenToTreeTerm( resultTreeTerm, subChildren );
             }
-
+*/
+// @formatter:on
             resultList.add( resultTreeTerm );
         }
 

@@ -221,11 +221,80 @@ public class GEMETClient {
      *            parent
      * @param language
      *            children in which language
-     * @return list of children
+     * @return list of JSONArrays with every array containing JSONObjects with
+     *         full data of every child
      */
     public List<JSONArray> getChildConcepts(String conceptUri, String language) {
+        return getChildConceptsViaGetAllConceptRelatives( conceptUri, language );
+    }
+
+    protected List<JSONArray> getChildConceptsViaGetAllConceptRelatives(String conceptUri, String language) {
+        // child relation types
+        ConceptRelation[] relations = null;
+        if (isGroup( conceptUri )) {
+            // for groups the relation is "groupMember"
+            relations = new ConceptRelation[] { ConceptRelation.GROUP_MEMBER };
+        } else {
+            // for concepts and soupergroups the relation is "narrower"
+            relations = new ConceptRelation[] { ConceptRelation.NARROWER };
+        }
+
+        List<JSONArray> resultList = new ArrayList<JSONArray>();
+
+        // get children
+        for (ConceptRelation relation : relations) {
+            // only relation as JSON Object { source, relation, target } and not
+            // full data of target
+            JSONArray conceptRelations = getAllConceptRelatives( conceptUri, relation, language );
+
+            // parse relations and fetch full child concepts
+            JSONArray childConcepts = new JSONArray();
+            for (Object conceptRelation : conceptRelations) {
+                String childId = JSONUtils.getTarget( (JSONObject) conceptRelation );
+
+                // we have to filter GROUP_MEMBER ! We use only those children
+                // having NO BROADER concept meaning their only parent is the
+                // group !
+                if (relation == ConceptRelation.GROUP_MEMBER) {
+                    if (hasRelation( childId, ConceptRelation.BROADER, language )) {
+                        continue;
+                    }
+                }
+
+                // we have a child, fetch full data and add to child concepts
+                childConcepts.add( getConceptAsJSON( childId, language ) );
+            }
+
+            // add all children of this relation type to result list
+            resultList.add( childConcepts );
+        }
+
+        return resultList;
+    }
+
+    // @formatter:off
+    /**
+     * This one is buggy e.g.<br>
+     * works for this URL:<br>
+     * http://www.eionet.europa.eu/gemet/getRelatedConcepts?concept_uri=http://www.eionet.europa.eu/gemet/group/10117&relation_uri=http://www.eionet.europa.eu/gemet/2004/06/gemet-schema.rdf%23groupMember&language=de
+     * <br>
+     * but NOT for this one:<br>
+     * http://www.eionet.europa.eu/gemet/getRelatedConcepts?concept_uri=http://www.eionet.europa.eu/gemet/group/10114&relation_uri=http://www.eionet.europa.eu/gemet/2004/06/gemet-schema.rdf%23groupMember&language=de
+     * @param conceptUri
+     * @param language
+     * @return
+     */
+    // @formatter:on
+    protected List<JSONArray> getChildConceptsViaGetRelatedConcepts(String conceptUri, String language) {
         // child relations
-        ConceptRelation[] relations = new ConceptRelation[] { ConceptRelation.NARROWER, ConceptRelation.GROUP_MEMBER };
+        ConceptRelation[] relations = null;
+        if (isGroup( conceptUri )) {
+            // for groups the relation is "groupMember"
+            relations = new ConceptRelation[] { ConceptRelation.GROUP_MEMBER };
+        } else {
+            // for concepts and soupergroups the relation is "narrower"
+            relations = new ConceptRelation[] { ConceptRelation.NARROWER };
+        }
 
         // get children
         List<JSONArray> conceptList = new ArrayList<JSONArray>();
@@ -261,7 +330,7 @@ public class GEMETClient {
      * @return true or false
      */
     private boolean hasRelation(String conceptUri, ConceptRelation relation, String language) {
-        JSONArray concepts = getRelatedConcepts( conceptUri, ConceptRelation.BROADER, language );
+        JSONArray concepts = getAllConceptRelatives( conceptUri, relation, language );
         return (concepts.size() > 0);
     }
 
@@ -325,6 +394,29 @@ public class GEMETClient {
         return result;
     }
 
+    public JSONArray getAllConceptRelatives(String conceptUri, ConceptRelation relation, String language) {
+        JSONArray result = new JSONArray();
+        if (conceptUri == null || conceptUri.trim().length() == 0) {
+            log.warn( "No conceptUri passed (" + conceptUri + "), we return empty result !" );
+            return result;
+        }
+
+        String req = HTMLUtils.prepareUrl( serviceUrl ) + "getAllConceptRelatives?concept_uri=" + conceptUri + "&relation_uri=" + HTMLUtils.encodeForURL( relation.toString() )
+                + "&language=" + language;
+
+        if (log.isDebugEnabled()) {
+            log.debug( "Fetching terms from: " + req );
+        }
+
+        try {
+            result = (JSONArray) requestJsonUrl( req );
+        } catch (Exception e) {
+            log.error( "The URI seems to have a problem: " + req, e );
+        }
+
+        return result;
+    }
+
     private Object requestJsonUrl(String url) throws Exception {
         HttpClient client = HttpClientBuilder.create().useSystemProperties().build();
         HttpGet getMethod = new HttpGet( url );
@@ -335,5 +427,19 @@ public class GEMETClient {
             log.debug( "response: " + json );
         }
         return new JSONParser().parse( json );
+    }
+
+    public boolean isConcept(String conceptUri) {
+        if (conceptUri.contains( "/concept/" ))
+            return true;
+        return false;
+
+    }
+
+    public boolean isGroup(String conceptUri) {
+        if (conceptUri.contains( "/group/" ))
+            return true;
+        return false;
+
     }
 }

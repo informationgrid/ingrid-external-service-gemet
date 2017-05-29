@@ -17,6 +17,10 @@ public class JSONUtils {
         return (String) json.get( "thesaurus" );
     }
 
+    public static String getTarget(JSONObject json) {
+        return (String) json.get( "target" );
+    }
+
     public static JSONArray toJSONArray(JSONObject jsonObj) {
         JSONArray jsonArray = new JSONArray();
         jsonArray.add( jsonObj );

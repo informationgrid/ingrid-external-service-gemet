@@ -39,17 +39,20 @@ public class GEMETServiceTest {
         // german terms
 
         // begins with "Wasser"
+        // NO, WE ALWAYS USE "CONTAINS" in Backend, better in IGE frontend !
         Term[] terms = service.findTermsFromQueryTerm( "Wasser", MatchingType.BEGINS_WITH, true, Locale.GERMAN );
         assertThat( terms.length, greaterThan( 0 ) );
         for (Term term : terms) {
             checkTerm( term, null, TermType.DESCRIPTOR, null );
-            assertThat( term.getName().toLowerCase(), startsWith( "wasser" ) );
+//            assertThat( term.getName().toLowerCase(), startsWith( "wasser" ) );
+            assertThat( term.getName().toLowerCase(), containsString( "wasser" ) );
         }
 
         // exact "Wasser"
         terms = service.findTermsFromQueryTerm( "Wasser", MatchingType.EXACT, true, Locale.GERMAN );
-        assertThat( terms, arrayWithSize( 1 ) );
-        checkTerm( terms[0], "http://www.eionet.europa.eu/gemet/concept/9242", TermType.DESCRIPTOR, "Wasser" );
+        // NO, WE ALWAYS USE "CONTAINS" in Backend, better in IGE frontend !
+//        assertThat( terms, arrayWithSize( 1 ) );
+//        checkTerm( terms[0], "http://www.eionet.europa.eu/gemet/concept/9242", TermType.DESCRIPTOR, "Wasser" );
 
         // contains "Wasser"
         terms = service.findTermsFromQueryTerm( "Wasser", MatchingType.CONTAINS, true, Locale.GERMAN );
@@ -73,7 +76,9 @@ public class GEMETServiceTest {
         assertThat( terms.length, greaterThan( 0 ) );
         for (Term term : terms) {
             checkTerm( term, null, TermType.DESCRIPTOR, null );
-            assertThat( term.getName().toLowerCase(), anyOf( startsWith( "wasser" ), startsWith( "schutz" ) ) );
+            // NO, WE ALWAYS USE "CONTAINS" in Backend, better in IGE frontend !
+//            assertThat( term.getName().toLowerCase(), anyOf( startsWith( "wasser" ), startsWith( "schutz" ) ) );
+            assertThat( term.getName().toLowerCase(), anyOf( containsString( "wasser" ), containsString( "schutz" ) ) );
         }
 
         // english term
@@ -83,10 +88,13 @@ public class GEMETServiceTest {
         assertThat( terms.length, greaterThan( 0 ) );
         for (Term term : terms) {
             checkTerm( term, null, TermType.DESCRIPTOR, null );
-            assertThat( term.getName().toLowerCase(), startsWith( "water" ) );
+            // NO, WE ALWAYS USE "CONTAINS" in Backend, better in IGE frontend !
+//            assertThat( term.getName().toLowerCase(), startsWith( "water" ) );
+            assertThat( term.getName().toLowerCase(), containsString( "water" ) );
         }
 
         // exact "water (substance)"
+        // NO, WE ALWAYS USE "CONTAINS" in Backend, better in IGE frontend !
         terms = service.findTermsFromQueryTerm( "Water (Substance)", MatchingType.EXACT, true, Locale.ENGLISH );
         assertThat( terms, arrayWithSize( 1 ) );
         checkTerm( terms[0], null, TermType.DESCRIPTOR, null );
@@ -133,7 +141,9 @@ public class GEMETServiceTest {
                     term.getName(),
                     anyOf( equalTo( "ANTHROPOGENE AKTIVITÄTEN UND PRODUKTE, WIRKUNGEN AUF DIE UMWELT" ), equalTo( "NATÜRLICHE UND ANTHROPOGEN ÜBERFORMTE UMWELT" ),
                             equalTo( "SOZIALE ASPEKTE, UMWELTPOLITISCHE MASSNAHMEN" ), equalTo( "ZUSATZVERZEICHNISSE" ) ) );
-            assertThat( term.getChildren().size(), anyOf( is( 12 ), is( 9 ), is( 2 ) ) );
+            // NO, we always pass only one dummy child for groups in backend !
+//            assertThat( term.getChildren().size(), anyOf( is( 12 ), is( 9 ), is( 2 ) ) );
+            assertThat( term.getChildren().size(), is( 1 ) );
         }
 
         // supergroup: ZUSATZVERZEICHNISSE -> 2 Untergruppen (type group)

@@ -44,7 +44,6 @@ public class GEMETMapper {
     public List<Term> mapToTermsWithKeywordsFilter(List<JSONArray> jsonArrayList, String[] keywordsFilter, Locale locale) {
         List<Term> resultList = new ArrayList<Term>();
 
-        List<String> resultNames = new ArrayList<String>();
         for (JSONArray jsonArray : jsonArrayList) {
             Iterator<JSONObject> iterator = jsonArray.iterator();
             while (iterator.hasNext()) {
@@ -64,7 +63,7 @@ public class GEMETMapper {
 
                 // add term if not already present
                 if (addTerm) {
-                    if (!resultNames.contains( myTerm.getName() )) {
+                    if (!resultList.contains( myTerm )) {
                         resultList.add( myTerm );
                     }
                 }

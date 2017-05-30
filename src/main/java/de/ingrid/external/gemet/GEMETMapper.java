@@ -189,6 +189,8 @@ public class GEMETMapper {
         Term outTerm = new TermImpl();
 
         outTerm.setId( RDFUtils.getId( res ) );
+        // also set ID as GEMET ID, so the term is classified as GEMET in frontend
+        outTerm.setAlternateId( outTerm.getId() );
 
         String name = RDFUtils.getName( res, language );
         outTerm.setName( name );
@@ -225,6 +227,8 @@ public class GEMETMapper {
      */
     private Term mapToTerm(JSONObject json, Term termToMapTo) {
         termToMapTo.setId( JSONUtils.getId( json ) );
+        // also set ID as GEMET ID, so the term is classified as GEMET in frontend
+        termToMapTo.setAlternateId( termToMapTo.getId() );
         termToMapTo.setName( JSONUtils.getName( json ) );
         termToMapTo.setType( getTermTypeFromJSON( JSONUtils.getType( json ) ) );
 

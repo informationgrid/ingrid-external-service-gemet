@@ -87,7 +87,7 @@ public class GEMETClient {
         }
     }
 
-    /** The URL to the service to use */
+    /** The URL to the service to use ((set from gemet.properties) */
     private String serviceUrl;
 
     public GEMETClient(ResourceBundle gemetProps) {

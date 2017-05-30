@@ -30,35 +30,91 @@ public class GEMETService implements ThesaurusService {
     GEMETClient gemetClient;
     GEMETMapper gemetMapper;
 
-    /** request RDF format from service where possible (true) or JSON (false) */
-    Boolean doRDF;
+    /**
+     * request RDF format from service where possible (true) or JSON (false)
+     * (set from gemet.properties)
+     */
+    protected boolean doRDF;
 
-    public Boolean getDoRDF() {
-        return doRDF;
-    }
+    /**
+     * Maximum number of keywords to analyze from text (set from
+     * gemet.properties)
+     */
+    protected int analyzeMaxWords;
 
-    public void setDoRDF(Boolean doRDF) {
-        this.doRDF = doRDF;
-    }
+    /**
+     * When looking for terms from a given query ignore the matching type which
+     * is passed to the service (CONTAINS, BEGINS_WITH, EXACT) and always use
+     * CONTAINS to get maximum number of results (set from gemet.properties)
+     */
+    protected boolean ignorePassedMatchingType;
 
     // Init Method is called by the Spring Framework on initialization
     public void init() throws Exception {
         ResourceBundle gemetProps = ResourceBundle.getBundle( "gemet" );
 
         this.doRDF = Boolean.parseBoolean( gemetProps.getString( "service.request.rdf" ) );
+        this.analyzeMaxWords = Integer.parseInt( gemetProps.getString( "service.analyzeMaxWords" ) );
+        this.ignorePassedMatchingType = Boolean.parseBoolean( gemetProps.getString( "service.ignorePassedMatchingType" ) );
 
         this.gemetClient = new GEMETClient( gemetProps );
         this.gemetMapper = new GEMETMapper();
-
     }
 
-    // NOTICE: Parameter "addDescriptors" is irrelevant !
+    /**
+     * request RDF format from service where possible (true) or JSON (false)
+     * (set from gemet.properties)
+     */
+    public boolean isDoRDF() {
+        return doRDF;
+    }
+
+    /**
+     * request RDF format from service where possible (true) or JSON (false)
+     * (set from gemet.properties)
+     */
+    public void setDoRDF(boolean doRDF) {
+        this.doRDF = doRDF;
+    }
+
+    /**
+     * When looking for terms from a given query ignore the matching type which
+     * is passed to the service (CONTAINS, BEGINS_WITH, EXACT) and always use
+     * CONTAINS to get maximum number of results (set from gemet.properties)
+     */
+    public boolean isIgnorePassedMatchingType() {
+        return ignorePassedMatchingType;
+    }
+
+    /**
+     * When looking for terms from a given query ignore the matching type which
+     * is passed to the service (CONTAINS, BEGINS_WITH, EXACT) and always use
+     * CONTAINS to get maximum number of results (set from gemet.properties)
+     */
+    public void setIgnorePassedMatchingType(boolean ignorePassedMatchingType) {
+        this.ignorePassedMatchingType = ignorePassedMatchingType;
+    }
+
+    /**
+     * NOTICE: Parameter "addDescriptors" is irrelevant !
+     * 
+     * @see de.ingrid.external.ThesaurusService#findTermsFromQueryTerm(java.lang.String,
+     *      de.ingrid.external.ThesaurusService.MatchingType, boolean,
+     *      java.util.Locale)
+     */
     @Override
     public Term[] findTermsFromQueryTerm(String queryTerm, MatchingType matching, boolean addDescriptors, Locale locale) {
         return findTermsFromQueryTerm( null, queryTerm, matching, addDescriptors, locale );
     }
 
-    // NOTICE: Parameter "url" and "addDescriptors" are irrelevant !
+    /**
+     * NOTICE: Parameter "url" and "addDescriptors" are irrelevant ! queryTerm
+     * is processed only up to analyzeMaxWords from gemet.properties
+     * 
+     * @see de.ingrid.external.ThesaurusService#findTermsFromQueryTerm(java.lang.String,
+     *      java.lang.String, de.ingrid.external.ThesaurusService.MatchingType,
+     *      boolean, java.util.Locale)
+     */
     @Override
     public Term[] findTermsFromQueryTerm(String url, String queryTerm, MatchingType matching, boolean addDescriptors, Locale locale) {
         if (queryTerm == null || queryTerm.trim().length() == 0) {
@@ -68,9 +124,11 @@ public class GEMETService implements ThesaurusService {
 
         String language = getGEMETLanguageFilter( locale );
         MatchingConceptsSearchMode gemetSearchMode = getGEMETSearchMode( matching );
-        // we ignore passed search mode and always search concepts containing
-        // the query
-        gemetSearchMode = MatchingConceptsSearchMode.CONTAINS;
+        if (this.ignorePassedMatchingType) {
+            // we ignore passed search mode and always search concepts
+            // containing the query
+            gemetSearchMode = MatchingConceptsSearchMode.CONTAINS;
+        }
 
         List<JSONArray> responseList = new ArrayList<JSONArray>();
 
@@ -78,7 +136,7 @@ public class GEMETService implements ThesaurusService {
         responseList.add( gemetClient.getConceptsMatchingKeyword( queryTerm, language, gemetSearchMode ) );
 
         // then search single keywords
-        String[] keywords = queryTerm.trim().split( " " );
+        String[] keywords = processKeywords( queryTerm.trim().split( " " ), this.analyzeMaxWords );
         if (keywords.length > 1) {
             responseList.addAll( gemetClient.getConceptsMatchingKeywords( keywords, language, gemetSearchMode ) );
         }
@@ -275,7 +333,13 @@ public class GEMETService implements ThesaurusService {
         return resultList.toArray( new RelatedTerm[resultList.size()] );
     }
 
-    // NOTICE: Parameter "ignoreCase" is irrelevant !
+    /**
+     * NOTICE: Parameter "ignoreCase" is irrelevant ! Keywords are processed
+     * only up to analyzeMaxWords from gemet.properties
+     * 
+     * @see de.ingrid.external.ThesaurusService#getSimilarTermsFromNames(java.lang.String[],
+     *      boolean, java.util.Locale)
+     */
     @Override
     public Term[] getSimilarTermsFromNames(String[] keywords, boolean ignoreCase, Locale locale) {
         String language = getGEMETLanguageFilter( locale );
@@ -283,7 +347,7 @@ public class GEMETService implements ThesaurusService {
         // We fetch similar terms from every single keyword and then compare
         // with other keywords when mapping to terms. GEMET service always
         // ignores case !
-
+        keywords = processKeywords( keywords, this.analyzeMaxWords );
         List<JSONArray> response = gemetClient.getConceptsMatchingKeywords( keywords, language, MatchingConceptsSearchMode.CONTAINS );
 
         List<Term> resultList = new ArrayList<Term>();
@@ -349,7 +413,13 @@ public class GEMETService implements ThesaurusService {
         return result;
     }
 
-    // NOTICE: Parameter "ignoreCase" is irrelevant !
+    /**
+     * NOTICE: Parameter "ignoreCase" is irrelevant ! Parameter
+     * "analyzeMaxWords" is overwritten from gemet.properties if larger !
+     * 
+     * @see de.ingrid.external.ThesaurusService#getTermsFromText(java.lang.String,
+     *      int, boolean, java.util.Locale)
+     */
     @Override
     public Term[] getTermsFromText(String text, int analyzeMaxWords, boolean ignoreCase, Locale locale) {
         if (text == null || text.trim().length() == 0) {
@@ -358,21 +428,12 @@ public class GEMETService implements ThesaurusService {
         }
 
         List<JSONArray> responseList = new ArrayList<JSONArray>();
+        if (analyzeMaxWords > this.analyzeMaxWords)
+            analyzeMaxWords = this.analyzeMaxWords;
 
         // split text to words, only maximum of words
-        String[] keywords = text.trim().split( " " );
+        String[] keywords = processKeywords( text.trim().split( " " ), analyzeMaxWords );
         if (keywords.length > 1) {
-            if (keywords.length > analyzeMaxWords) {
-                String[] keywordsMax = new String[analyzeMaxWords];
-                for (int i = 0; i < analyzeMaxWords; i++) {
-                    keywordsMax[i] = keywords[i];
-                }
-                keywords = keywordsMax;
-            }
-            // remove all punctuation
-            for (int i = 0; i < keywords.length; i++) {
-                keywords[i] = keywords[i].replaceAll( "\\p{P}", "" );
-            }
             String language = getGEMETLanguageFilter( locale );
             responseList.addAll( gemetClient.getConceptsMatchingKeywords( keywords, language, MatchingConceptsSearchMode.EXACT ) );
         }
@@ -383,6 +444,30 @@ public class GEMETService implements ThesaurusService {
         }
 
         return resultList.toArray( new Term[resultList.size()] );
+    }
+
+    /**
+     * Prepare keywords for GEMET request, e.g. reduce to max number, remove
+     * punctuation ...
+     * 
+     * @param keywords
+     * @param maxKeywords
+     * @return
+     */
+    private String[] processKeywords(String[] keywords, int maxKeywords) {
+        if (keywords.length > maxKeywords) {
+            String[] keywordsMax = new String[maxKeywords];
+            for (int i = 0; i < maxKeywords; i++) {
+                keywordsMax[i] = keywords[i];
+            }
+            keywords = keywordsMax;
+        }
+        // remove all punctuation
+        for (int i = 0; i < keywords.length; i++) {
+            keywords[i] = keywords[i].replaceAll( "\\p{P}", "" );
+        }
+
+        return keywords;
     }
 
     /**

@@ -170,6 +170,13 @@ public class GEMETService implements ThesaurusService {
 
         // get concept itself, this is the parent
         JSONObject parent = gemetClient.getConceptAsJSON( termId, language );
+        // we check on null, cause some concepts are buggy in service !
+        // (e.g. concept/15041)
+        if (parent == null) {
+            log.error( "Problems fetching " + termId + " we return empty children list !" );
+            return new TreeTerm[] {};
+        }
+
         JSONArray parentArray = JSONUtils.toJSONArray( parent );
 
         // get direct children
@@ -259,6 +266,13 @@ public class GEMETService implements ThesaurusService {
 
         // get concept and map to TreeTerm
         JSONObject inConcept = gemetClient.getConceptAsJSON( termId, language );
+        // we check on null, cause some concepts are buggy in service !
+        // (e.g. concept/15041)
+        if (inConcept == null) {
+            log.error( "Problems fetching " + termId + " we return empty TreeTerm !" );
+            return new TreeTermImpl();
+        }
+
         TreeTerm resultTreeTerm = gemetMapper.mapToTreeTerm( inConcept, null, null );
 
         // set parents up to top. We only produce ONE PATH, so no multiple

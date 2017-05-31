@@ -262,7 +262,16 @@ public class GEMETClient {
                 }
 
                 // we have a child, fetch full data and add to child concepts
-                childConcepts.add( getConceptAsJSON( childId, language ) );
+
+                // we check on null, cause some concepts are buggy in service !
+                // (e.g. concept/15041)
+                JSONObject child = getConceptAsJSON( childId, language );
+                if (child == null) {
+                    log.error( "Problems fetching child " + childId + " we skip this one !" );
+                    continue;
+                }
+
+                childConcepts.add( child );
             }
 
             // add all children of this relation type to result list

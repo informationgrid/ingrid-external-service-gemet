@@ -138,7 +138,8 @@ public class GEMETServiceTest {
                     anyOf( equalTo( "ANTHROPOGENE AKTIVITÄTEN UND PRODUKTE, WIRKUNGEN AUF DIE UMWELT" ), equalTo( "NATÜRLICHE UND ANTHROPOGEN ÜBERFORMTE UMWELT" ),
                             equalTo( "SOZIALE ASPEKTE, UMWELTPOLITISCHE MASSNAHMEN" ), equalTo( "ZUSATZVERZEICHNISSE" ) ) );
             // NO, we always pass only one dummy child for groups in backend !
-            // assertThat( term.getChildren().size(), anyOf( is( 12 ), is( 9 ), is( 2 ) ) );
+            // assertThat( term.getChildren().size(), anyOf( is( 12 ), is( 9 ),
+            // is( 2 ) ) );
             assertThat( term.getChildren().size(), is( 1 ) );
         }
 
@@ -377,27 +378,49 @@ public class GEMETServiceTest {
     public void getTerm() {
         // check RDF and JSON response
         boolean[] doRDFChoice = { true, false };
+        // check with alternateName in different language and without
+        boolean[] doAlternateLanguageChoice = { true, false };
+
         for (boolean doRDF : doRDFChoice) {
             service.setDoRDF( doRDF );
 
-            // DESCRIPTOR term in german
-            String termId = "http://www.eionet.europa.eu/gemet/concept/6740";
-            Term term = service.getTerm( termId, Locale.GERMAN );
-            checkTerm( term, termId, TermType.DESCRIPTOR, "Schutzgebiet" );
+            for (boolean doAlternateLanguage : doAlternateLanguageChoice) {
+                if (doAlternateLanguage)
+                    service.setAlternateLanguage( "fr" );
+                else
+                    service.setAlternateLanguage( null );
 
-            // in english
-            term = service.getTerm( termId, Locale.ENGLISH );
-            checkTerm( term, termId, TermType.DESCRIPTOR, "protected area" );
+                // DESCRIPTOR term in german
+                String termId = "http://www.eionet.europa.eu/gemet/concept/6740";
+                Term term = service.getTerm( termId, Locale.GERMAN );
+                checkTerm( term, termId, TermType.DESCRIPTOR, "Schutzgebiet" );
+                if (doAlternateLanguage)
+                    assertThat( term.getAlternateName().toLowerCase(), is( "espace protégé" ) );
+                else
+                    assertThat( term.getAlternateName(), is( nullValue() ) );
 
-            // check Umlaute
-            termId = "http://www.eionet.europa.eu/gemet/concept/6743";
-            term = service.getTerm( termId, Locale.GERMAN );
-            checkTerm( term, termId, TermType.DESCRIPTOR, "Geschützte Landschaft" );
+                // in english
+                term = service.getTerm( termId, Locale.ENGLISH );
+                checkTerm( term, termId, TermType.DESCRIPTOR, "protected area" );
+                if (doAlternateLanguage)
+                    assertThat( term.getAlternateName().toLowerCase(), is( "espace protégé" ) );
+                else
+                    assertThat( term.getAlternateName(), is( nullValue() ) );
 
-            // INVALID term
-            termId = "wrong id";
-            term = service.getTerm( termId, Locale.GERMAN );
-            assertThat( term, is( nullValue() ) );
+                // check Umlaute
+                termId = "http://www.eionet.europa.eu/gemet/concept/6743";
+                term = service.getTerm( termId, Locale.GERMAN );
+                checkTerm( term, termId, TermType.DESCRIPTOR, "Geschützte Landschaft" );
+                if (doAlternateLanguage)
+                    assertThat( term.getAlternateName().toLowerCase(), is( "site naturel prot\u00e9g\u00e9" ) );
+                else
+                    assertThat( term.getAlternateName(), is( nullValue() ) );
+
+                // INVALID term
+                termId = "wrong id";
+                term = service.getTerm( termId, Locale.GERMAN );
+                assertThat( term, is( nullValue() ) );
+            }
         }
     }
 

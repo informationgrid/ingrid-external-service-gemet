@@ -49,6 +49,12 @@ public class GEMETService implements ThesaurusService {
      */
     protected boolean ignorePassedMatchingType;
 
+    /**
+     * Also deliver terms in this language as alternateName. Set to null if no
+     * alternateName !
+     */
+    protected String alternateLanguage = null;
+
     // Init Method is called by the Spring Framework on initialization
     public void init() throws Exception {
         ResourceBundle gemetProps = ResourceBundle.getBundle( "gemet" );
@@ -56,6 +62,13 @@ public class GEMETService implements ThesaurusService {
         this.doRDF = Boolean.parseBoolean( gemetProps.getString( "service.request.rdf" ) );
         this.analyzeMaxWords = Integer.parseInt( gemetProps.getString( "service.analyzeMaxWords" ) );
         this.ignorePassedMatchingType = Boolean.parseBoolean( gemetProps.getString( "service.ignorePassedMatchingType" ) );
+        try {
+            this.alternateLanguage = gemetProps.getString( "service.alternateLanguage" );
+        } finally {
+            // set to null if empty string to indicate no alternate language !
+            if (this.alternateLanguage != null && this.alternateLanguage.length() == 0)
+                this.alternateLanguage = null;
+        }
 
         this.gemetClient = new GEMETClient( gemetProps );
         this.gemetMapper = new GEMETMapper();
@@ -93,6 +106,20 @@ public class GEMETService implements ThesaurusService {
      */
     public void setIgnorePassedMatchingType(boolean ignorePassedMatchingType) {
         this.ignorePassedMatchingType = ignorePassedMatchingType;
+    }
+
+    /**
+     * If not null name of term is also fetched in this language and set as alternateName !
+     */
+    public String getAlternateLanguage() {
+        return alternateLanguage;
+    }
+
+    /**
+     * If not null name of term is also fetched in this language and set as alternateName !
+     */
+    public void setAlternateLanguage(String alternateLanguage) {
+        this.alternateLanguage = alternateLanguage;
     }
 
     /**
@@ -402,6 +429,10 @@ public class GEMETService implements ThesaurusService {
         Term result = null;
         if (response != null) {
             result = gemetMapper.mapToTerm( response );
+            if (alternateLanguage != null) {
+                response = gemetClient.getConceptAsJSON( termId, alternateLanguage );
+                gemetMapper.mapAlternateLanguage( response, result );
+            }
         }
 
         return result;
@@ -421,7 +452,7 @@ public class GEMETService implements ThesaurusService {
 
         Term result = null;
         if (response != null) {
-            result = gemetMapper.mapToTerm( response, getGEMETLanguageFilter( locale ) );
+            result = gemetMapper.mapToTerm( response, getGEMETLanguageFilter( locale ), this.alternateLanguage );
         }
 
         return result;

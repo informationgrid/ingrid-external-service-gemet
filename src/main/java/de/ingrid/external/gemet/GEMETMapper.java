@@ -183,17 +183,24 @@ public class GEMETMapper {
      *            RDF model
      * @param language
      *            language to use
+     * @param alternateLanguage
+     *            map name in different language to alternateName. Pass null, if
+     *            no alternate language.
      * @return the API term
      */
-    public Term mapToTerm(Resource res, String language) {
+    public Term mapToTerm(Resource res, String language, String alternateLanguage) {
         Term outTerm = new TermImpl();
 
         outTerm.setId( RDFUtils.getId( res ) );
-        // also set ID as GEMET ID, so the term is classified as GEMET in frontend
+        // also set ID as GEMET ID, so the term is classified as GEMET in
+        // frontend
         outTerm.setAlternateId( outTerm.getId() );
 
-        String name = RDFUtils.getName( res, language );
-        outTerm.setName( name );
+        outTerm.setName( RDFUtils.getName( res, language ) );
+
+        if (alternateLanguage != null) {
+            outTerm.setAlternateName( RDFUtils.getName( res, alternateLanguage ) );
+        }
 
         outTerm.setType( getTermTypeFromRDF( RDFUtils.getType( res ) ) );
 
@@ -217,6 +224,15 @@ public class GEMETMapper {
     }
 
     /**
+     * Set alternate data in given term from different language.
+     */
+    public Term mapAlternateLanguage(JSONObject json, Term termToMapTo) {
+        termToMapTo.setAlternateName( JSONUtils.getName( json ) );
+
+        return termToMapTo;
+    }
+
+    /**
      * Map JSON object to given InGrid term.
      * 
      * @param json
@@ -227,7 +243,8 @@ public class GEMETMapper {
      */
     private Term mapToTerm(JSONObject json, Term termToMapTo) {
         termToMapTo.setId( JSONUtils.getId( json ) );
-        // also set ID as GEMET ID, so the term is classified as GEMET in frontend
+        // also set ID as GEMET ID, so the term is classified as GEMET in
+        // frontend
         termToMapTo.setAlternateId( termToMapTo.getId() );
         termToMapTo.setName( JSONUtils.getName( json ) );
         termToMapTo.setType( getTermTypeFromJSON( JSONUtils.getType( json ) ) );

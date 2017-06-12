@@ -64,6 +64,12 @@ public class GEMETService implements ThesaurusService {
         this.ignorePassedMatchingType = Boolean.parseBoolean( gemetProps.getString( "service.ignorePassedMatchingType" ) );
         try {
             this.alternateLanguage = gemetProps.getString( "service.alternateLanguage" );
+        } catch (Exception ex) {
+            // catch missing property etc., we set to null if problems
+            if (log.isDebugEnabled()) {
+                log.debug( "Problems reading 'service.alternateLanguage' from gemet.properties, we set to null." );
+            }
+            this.alternateLanguage = null;
         } finally {
             // set to null if empty string to indicate no alternate language !
             if (this.alternateLanguage != null && this.alternateLanguage.length() == 0)
@@ -109,14 +115,16 @@ public class GEMETService implements ThesaurusService {
     }
 
     /**
-     * If not null name of term is also fetched in this language and set as alternateName !
+     * If not null name of term is also fetched in this language and set as
+     * alternateName !
      */
     public String getAlternateLanguage() {
         return alternateLanguage;
     }
 
     /**
-     * If not null name of term is also fetched in this language and set as alternateName !
+     * If not null name of term is also fetched in this language and set as
+     * alternateName !
      */
     public void setAlternateLanguage(String alternateLanguage) {
         this.alternateLanguage = alternateLanguage;
@@ -172,6 +180,31 @@ public class GEMETService implements ThesaurusService {
         if (responseList != null && responseList.size() > 0) {
             resultList = gemetMapper.mapToTermsWithKeywordsFilter( responseList, keywords, locale );
         }
+
+// @formatter:off
+/*
+        // NOTICE: result list does NOT contain additional localization of term!
+        // We fetch explicitly again to get all localizations !
+        // NO ! commented, is TOO SLOW ! We explicitly call for additional
+        // localization of CHOSEN TERM from frontend !
+        if (alternateLanguage != null) {
+
+            // fetch JSON
+            for (Term result : resultList) {
+                if (!alternateLanguage.equals( language )) {
+                    gemetMapper.mapAlternateLanguage( gemetClient.getConceptAsJSON( result.getId(), alternateLanguage ), result );
+                } else {
+                    result.setAlternateName( result.getName() );
+                }
+            }
+
+            // fetch RDF, we comment this one, is slower
+//            for (int i = 0; i < resultList.size(); i++) {
+//                resultList.set( i, this.getTermFromRDF( resultList.get( i ).getId(), locale ) );
+//            }
+        }
+*/
+// @formatter:on
 
         return resultList.toArray( new Term[resultList.size()] );
     }
@@ -429,8 +462,12 @@ public class GEMETService implements ThesaurusService {
         Term result = null;
         if (response != null) {
             result = gemetMapper.mapToTerm( response );
+
+            // handle alternate localization, we have to do another request !
             if (alternateLanguage != null) {
-                response = gemetClient.getConceptAsJSON( termId, alternateLanguage );
+                if (!alternateLanguage.equals( language )) {
+                    response = gemetClient.getConceptAsJSON( termId, alternateLanguage );
+                }
                 gemetMapper.mapAlternateLanguage( response, result );
             }
         }

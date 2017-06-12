@@ -42,67 +42,112 @@ public class GEMETServiceTest {
         // gemet.properties
         service.setIgnorePassedMatchingType( false );
 
-        // begins with "Wasser"
-        Term[] terms = service.findTermsFromQueryTerm( "Wasser", MatchingType.BEGINS_WITH, true, Locale.GERMAN );
-        assertThat( terms.length, greaterThan( 0 ) );
-        for (Term term : terms) {
-            checkTerm( term, null, TermType.DESCRIPTOR, null );
-            assertThat( term.getName().toLowerCase(), startsWith( "wasser" ) );
-        }
+        // but also check every request with additional localization of term !
+        // No, we removed this functionality for findTermsFromQueryTerm, TOO
+        // SLOW !
+        // boolean[] doAlternateLanguageChoice = { false, true };
+        boolean[] doAlternateLanguageChoice = { false };
 
-        // exact "Wasser"
-        terms = service.findTermsFromQueryTerm( "Wasser", MatchingType.EXACT, true, Locale.GERMAN );
-        assertThat( terms, arrayWithSize( 1 ) );
-        checkTerm( terms[0], "http://www.eionet.europa.eu/gemet/concept/9242", TermType.DESCRIPTOR, "Wasser" );
+        for (boolean doAlternateLanguage : doAlternateLanguageChoice) {
+            if (doAlternateLanguage)
+                service.setAlternateLanguage( "fr" );
+            else
+                service.setAlternateLanguage( null );
 
-        // contains "Wasser"
-        terms = service.findTermsFromQueryTerm( "Wasser", MatchingType.CONTAINS, true, Locale.GERMAN );
-        assertThat( terms.length, greaterThan( 0 ) );
-        for (Term term : terms) {
-            checkTerm( term, null, TermType.DESCRIPTOR, null );
-            assertThat( term.getName().toLowerCase(), containsString( "wasser" ) );
-        }
+            // begins with "Wasser"
+            Term[] terms = service.findTermsFromQueryTerm( "Wasser", MatchingType.BEGINS_WITH, true, Locale.GERMAN );
+            assertThat( terms.length, greaterThan( 0 ) );
+            for (Term term : terms) {
+                checkTerm( term, null, TermType.DESCRIPTOR, null );
+                assertThat( term.getName().toLowerCase(), startsWith( "wasser" ) );
+                if (doAlternateLanguage)
+                    assertThat( term.getAlternateName(), is( not( nullValue() ) ) );
+                else
+                    assertThat( term.getAlternateName(), is( nullValue() ) );
+            }
 
-        // contains "Wasser" and "Schutz"
-        terms = service.findTermsFromQueryTerm( "Wasser Schutz", MatchingType.CONTAINS, true, Locale.GERMAN );
-        assertThat( terms.length, greaterThan( 0 ) );
-        for (Term term : terms) {
-            checkTerm( term, null, TermType.DESCRIPTOR, null );
-            assertThat( term.getName().toLowerCase(), containsString( "wasser" ) );
-            assertThat( term.getName().toLowerCase(), containsString( "schutz" ) );
-        }
+            // exact "Wasser"
+            terms = service.findTermsFromQueryTerm( "Wasser", MatchingType.EXACT, true, Locale.GERMAN );
+            assertThat( terms, arrayWithSize( 1 ) );
+            checkTerm( terms[0], "http://www.eionet.europa.eu/gemet/concept/9242", TermType.DESCRIPTOR, "Wasser" );
+            if (doAlternateLanguage)
+                assertThat( terms[0].getAlternateName(), is( "eau (substance)" ) );
+            else
+                assertThat( terms[0].getAlternateName(), is( nullValue() ) );
 
-        // begins with "Wasser" or "Schutz" and then contains both
-        terms = service.findTermsFromQueryTerm( "Wasser Schutz", MatchingType.BEGINS_WITH, true, Locale.GERMAN );
-        assertThat( terms.length, greaterThan( 0 ) );
-        for (Term term : terms) {
-            checkTerm( term, null, TermType.DESCRIPTOR, null );
-            assertThat( term.getName().toLowerCase(), anyOf( startsWith( "wasser" ), startsWith( "schutz" ) ) );
-        }
+            // contains "Wasser"
+            terms = service.findTermsFromQueryTerm( "Wasser", MatchingType.CONTAINS, true, Locale.GERMAN );
+            assertThat( terms.length, greaterThan( 0 ) );
+            for (Term term : terms) {
+                checkTerm( term, null, TermType.DESCRIPTOR, null );
+                assertThat( term.getName().toLowerCase(), containsString( "wasser" ) );
+                if (doAlternateLanguage)
+                    assertThat( term.getAlternateName(), is( not( nullValue() ) ) );
+                else
+                    assertThat( term.getAlternateName(), is( nullValue() ) );
+            }
 
-        // english term
+            // contains "Wasser" and "Schutz"
+            terms = service.findTermsFromQueryTerm( "Wasser Schutz", MatchingType.CONTAINS, true, Locale.GERMAN );
+            assertThat( terms.length, greaterThan( 0 ) );
+            for (Term term : terms) {
+                checkTerm( term, null, TermType.DESCRIPTOR, null );
+                assertThat( term.getName().toLowerCase(), containsString( "wasser" ) );
+                assertThat( term.getName().toLowerCase(), containsString( "schutz" ) );
+                if (doAlternateLanguage)
+                    assertThat( term.getAlternateName(), is( not( nullValue() ) ) );
+                else
+                    assertThat( term.getAlternateName(), is( nullValue() ) );
+            }
 
-        // begins with "Water"
-        terms = service.findTermsFromQueryTerm( "Water", MatchingType.BEGINS_WITH, true, Locale.ENGLISH );
-        assertThat( terms.length, greaterThan( 0 ) );
-        for (Term term : terms) {
-            checkTerm( term, null, TermType.DESCRIPTOR, null );
-            assertThat( term.getName().toLowerCase(), startsWith( "water" ) );
-        }
+            // begins with "Wasser" or "Schutz" and then contains both
+            terms = service.findTermsFromQueryTerm( "Wasser Schutz", MatchingType.BEGINS_WITH, true, Locale.GERMAN );
+            assertThat( terms.length, greaterThan( 0 ) );
+            for (Term term : terms) {
+                checkTerm( term, null, TermType.DESCRIPTOR, null );
+                assertThat( term.getName().toLowerCase(), anyOf( startsWith( "wasser" ), startsWith( "schutz" ) ) );
+                if (doAlternateLanguage)
+                    assertThat( term.getAlternateName(), is( not( nullValue() ) ) );
+                else
+                    assertThat( term.getAlternateName(), is( nullValue() ) );
+            }
 
-        // exact "water (substance)"
-        terms = service.findTermsFromQueryTerm( "Water (Substance)", MatchingType.EXACT, true, Locale.ENGLISH );
-        assertThat( terms, arrayWithSize( 1 ) );
-        checkTerm( terms[0], null, TermType.DESCRIPTOR, null );
-        assertThat( terms[0].getName().toLowerCase(), equalTo( "water (substance)" ) );
+            // english term
 
-        // contains "Water" and "Substance"
-        terms = service.findTermsFromQueryTerm( "Water Substance", MatchingType.CONTAINS, true, Locale.ENGLISH );
-        assertThat( terms.length, greaterThan( 0 ) );
-        for (Term term : terms) {
-            checkTerm( term, null, TermType.DESCRIPTOR, null );
-            assertThat( term.getName().toLowerCase(), containsString( "water" ) );
-            assertThat( term.getName().toLowerCase(), containsString( "substance" ) );
+            // begins with "Water"
+            terms = service.findTermsFromQueryTerm( "Water", MatchingType.BEGINS_WITH, true, Locale.ENGLISH );
+            assertThat( terms.length, greaterThan( 0 ) );
+            for (Term term : terms) {
+                checkTerm( term, null, TermType.DESCRIPTOR, null );
+                assertThat( term.getName().toLowerCase(), startsWith( "water" ) );
+                if (doAlternateLanguage)
+                    assertThat( term.getAlternateName(), is( not( nullValue() ) ) );
+                else
+                    assertThat( term.getAlternateName(), is( nullValue() ) );
+            }
+
+            // exact "water (substance)"
+            terms = service.findTermsFromQueryTerm( "Water (Substance)", MatchingType.EXACT, true, Locale.ENGLISH );
+            assertThat( terms, arrayWithSize( 1 ) );
+            checkTerm( terms[0], null, TermType.DESCRIPTOR, null );
+            assertThat( terms[0].getName().toLowerCase(), equalTo( "water (substance)" ) );
+            if (doAlternateLanguage)
+                assertThat( terms[0].getAlternateName(), is( "eau (substance)" ) );
+            else
+                assertThat( terms[0].getAlternateName(), is( nullValue() ) );
+
+            // contains "Water" and "Substance"
+            terms = service.findTermsFromQueryTerm( "Water Substance", MatchingType.CONTAINS, true, Locale.ENGLISH );
+            assertThat( terms.length, greaterThan( 0 ) );
+            for (Term term : terms) {
+                checkTerm( term, null, TermType.DESCRIPTOR, null );
+                assertThat( term.getName().toLowerCase(), containsString( "water" ) );
+                assertThat( term.getName().toLowerCase(), containsString( "substance" ) );
+                if (doAlternateLanguage)
+                    assertThat( term.getAlternateName(), is( not( nullValue() ) ) );
+                else
+                    assertThat( term.getAlternateName(), is( nullValue() ) );
+            }
         }
     }
 

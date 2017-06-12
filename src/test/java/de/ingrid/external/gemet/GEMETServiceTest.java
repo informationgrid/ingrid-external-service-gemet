@@ -43,10 +43,8 @@ public class GEMETServiceTest {
         service.setIgnorePassedMatchingType( false );
 
         // but also check every request with additional localization of term !
-        // No, we removed this functionality for findTermsFromQueryTerm, TOO
-        // SLOW !
-        // boolean[] doAlternateLanguageChoice = { false, true };
-        boolean[] doAlternateLanguageChoice = { false };
+        // NOTICE: Only localized when EXACT matching requested !
+        boolean[] doAlternateLanguageChoice = { false, true };
 
         for (boolean doAlternateLanguage : doAlternateLanguageChoice) {
             if (doAlternateLanguage)
@@ -60,10 +58,7 @@ public class GEMETServiceTest {
             for (Term term : terms) {
                 checkTerm( term, null, TermType.DESCRIPTOR, null );
                 assertThat( term.getName().toLowerCase(), startsWith( "wasser" ) );
-                if (doAlternateLanguage)
-                    assertThat( term.getAlternateName(), is( not( nullValue() ) ) );
-                else
-                    assertThat( term.getAlternateName(), is( nullValue() ) );
+                assertThat( term.getAlternateName(), is( nullValue() ) );
             }
 
             // exact "Wasser"
@@ -81,10 +76,7 @@ public class GEMETServiceTest {
             for (Term term : terms) {
                 checkTerm( term, null, TermType.DESCRIPTOR, null );
                 assertThat( term.getName().toLowerCase(), containsString( "wasser" ) );
-                if (doAlternateLanguage)
-                    assertThat( term.getAlternateName(), is( not( nullValue() ) ) );
-                else
-                    assertThat( term.getAlternateName(), is( nullValue() ) );
+                assertThat( term.getAlternateName(), is( nullValue() ) );
             }
 
             // contains "Wasser" and "Schutz"
@@ -94,10 +86,7 @@ public class GEMETServiceTest {
                 checkTerm( term, null, TermType.DESCRIPTOR, null );
                 assertThat( term.getName().toLowerCase(), containsString( "wasser" ) );
                 assertThat( term.getName().toLowerCase(), containsString( "schutz" ) );
-                if (doAlternateLanguage)
-                    assertThat( term.getAlternateName(), is( not( nullValue() ) ) );
-                else
-                    assertThat( term.getAlternateName(), is( nullValue() ) );
+                assertThat( term.getAlternateName(), is( nullValue() ) );
             }
 
             // begins with "Wasser" or "Schutz" and then contains both
@@ -106,10 +95,7 @@ public class GEMETServiceTest {
             for (Term term : terms) {
                 checkTerm( term, null, TermType.DESCRIPTOR, null );
                 assertThat( term.getName().toLowerCase(), anyOf( startsWith( "wasser" ), startsWith( "schutz" ) ) );
-                if (doAlternateLanguage)
-                    assertThat( term.getAlternateName(), is( not( nullValue() ) ) );
-                else
-                    assertThat( term.getAlternateName(), is( nullValue() ) );
+                assertThat( term.getAlternateName(), is( nullValue() ) );
             }
 
             // english term
@@ -120,10 +106,7 @@ public class GEMETServiceTest {
             for (Term term : terms) {
                 checkTerm( term, null, TermType.DESCRIPTOR, null );
                 assertThat( term.getName().toLowerCase(), startsWith( "water" ) );
-                if (doAlternateLanguage)
-                    assertThat( term.getAlternateName(), is( not( nullValue() ) ) );
-                else
-                    assertThat( term.getAlternateName(), is( nullValue() ) );
+                assertThat( term.getAlternateName(), is( nullValue() ) );
             }
 
             // exact "water (substance)"
@@ -143,10 +126,7 @@ public class GEMETServiceTest {
                 checkTerm( term, null, TermType.DESCRIPTOR, null );
                 assertThat( term.getName().toLowerCase(), containsString( "water" ) );
                 assertThat( term.getName().toLowerCase(), containsString( "substance" ) );
-                if (doAlternateLanguage)
-                    assertThat( term.getAlternateName(), is( not( nullValue() ) ) );
-                else
-                    assertThat( term.getAlternateName(), is( nullValue() ) );
+                assertThat( term.getAlternateName(), is( nullValue() ) );
             }
         }
     }

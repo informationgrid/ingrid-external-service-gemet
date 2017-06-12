@@ -181,14 +181,11 @@ public class GEMETService implements ThesaurusService {
             resultList = gemetMapper.mapToTermsWithKeywordsFilter( responseList, keywords, locale );
         }
 
-// @formatter:off
-/*
         // NOTICE: result list does NOT contain additional localization of term!
-        // We fetch explicitly again to get all localizations !
-        // NO ! commented, is TOO SLOW ! We explicitly call for additional
-        // localization of CHOSEN TERM from frontend !
-        if (alternateLanguage != null) {
-
+        // We fetch additional localization if wanted (alternateLanguage set)
+        // AND EXACT matching was requested, where we have only "one" term !
+        // see https://dev.informationgrid.eu/redmine/issues/363
+        if (alternateLanguage != null && MatchingConceptsSearchMode.EXACT.equals( gemetSearchMode )) {
             // fetch JSON
             for (Term result : resultList) {
                 if (!alternateLanguage.equals( language )) {
@@ -197,14 +194,15 @@ public class GEMETService implements ThesaurusService {
                     result.setAlternateName( result.getName() );
                 }
             }
-
+// @formatter:off
             // fetch RDF, we comment this one, is slower
-//            for (int i = 0; i < resultList.size(); i++) {
-//                resultList.set( i, this.getTermFromRDF( resultList.get( i ).getId(), locale ) );
-//            }
-        }
+/*
+            for (int i = 0; i < resultList.size(); i++) {
+                resultList.set( i, this.getTermFromRDF( resultList.get( i ).getId(), locale ) );
+            }
 */
 // @formatter:on
+        }
 
         return resultList.toArray( new Term[resultList.size()] );
     }

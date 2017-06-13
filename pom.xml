@@ -73,7 +73,7 @@
         <artifactId>jgitflow-maven-plugin</artifactId>
         <version>1.0-m5.1</version>
         <configuration>
-          <defaultOriginUrl>https://github.com/informationgrid/ingrid-external-service-sns</defaultOriginUrl>
+          <defaultOriginUrl>https://github.com/informationgrid/ingrid-external-service-gemet.git</defaultOriginUrl>
           <noDeploy>true</noDeploy>
         </configuration>
       </plugin>

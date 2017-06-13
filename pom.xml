@@ -9,7 +9,7 @@
   <groupId>de.ingrid</groupId>
   <artifactId>ingrid-external-service-gemet</artifactId>
   <packaging>jar</packaging>
-  <version>4.0.3-SNAPSHOT</version>
+  <version>4.0.4-SNAPSHOT</version>
   <name>ingrid-external-service-gemet</name>
   <scm>
     <connection>scm:git:git@github.com:informationgrid/ingrid-external-service-gemet.git</connection>

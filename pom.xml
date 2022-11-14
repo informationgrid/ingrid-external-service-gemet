@@ -15,6 +15,9 @@
     <developerConnection>scm:git:git@github.com:informationgrid/ingrid-external-service-gemet.git</developerConnection>
     <tag>HEAD</tag>
   </scm>
+  <properties>
+    <maven.compiler.release>17</maven.compiler.release>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>de.ingrid</groupId>
@@ -89,33 +92,6 @@
           <noDeploy>true</noDeploy>
         </configuration>
       </plugin>
-      <plugin>
-        <groupId>org.openrewrite.maven</groupId>
-        <artifactId>rewrite-maven-plugin</artifactId>
-        <version>4.36.0</version>
-        <configuration>
-          <activeRecipes>
-<!--                                          <recipe>org.openrewrite.java.logging.log4j.Log4j1ToLog4j2</recipe>-->
-            <recipe>org.openrewrite.java.testing.junit5.JUnit4to5Migration</recipe>
-            <recipe>org.openrewrite.java.testing.junit5.CleanupAssertions</recipe>
-            <recipe>org.openrewrite.java.testing.junit5.CleanupJUnitImports</recipe>
-            <recipe>org.openrewrite.java.testing.junit5.ExpectedExceptionToAssertThrows</recipe>
-          </activeRecipes>
-        </configuration>
-        <dependencies>
-          <dependency>
-            <groupId>org.openrewrite.recipe</groupId>
-            <artifactId>rewrite-testing-frameworks</artifactId>
-            <version>1.30.0</version>
-          </dependency>
-          <dependency>
-            <groupId>org.openrewrite.recipe</groupId>
-            <artifactId>rewrite-logging-frameworks</artifactId>
-            <version>1.14.0</version>
-          </dependency>
-        </dependencies>
-      </plugin>
-
     </plugins>
   </build>
   <!-- NEVER DELETE: InGrid repo needed for download of base pom if not present ! -->

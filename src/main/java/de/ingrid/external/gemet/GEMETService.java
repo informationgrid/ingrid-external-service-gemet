@@ -29,11 +29,11 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.Stack;
 
-import org.apache.log4j.Logger;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-
-import com.hp.hpl.jena.rdf.model.Resource;
 
 import de.ingrid.external.ThesaurusService;
 import de.ingrid.external.gemet.GEMETClient.ConceptRelation;
@@ -47,7 +47,7 @@ import de.ingrid.external.om.impl.TreeTermImpl;
 
 public class GEMETService implements ThesaurusService {
 
-    private final static Logger log = Logger.getLogger( GEMETService.class );
+    private final static Logger log = LogManager.getLogger( GEMETService.class );
 
     GEMETClient gemetClient;
     GEMETMapper gemetMapper;
@@ -175,7 +175,7 @@ public class GEMETService implements ThesaurusService {
     @Override
     public Term[] findTermsFromQueryTerm(String url, String queryTerm, MatchingType matching, boolean addDescriptors, Locale locale) {
         if (queryTerm == null || queryTerm.trim().length() == 0) {
-            log.warn( "Empty queryTerm (" + queryTerm + ") passed, we return empty list !" );
+            log.warn("Empty queryTerm ({}) passed, we return empty list !", queryTerm);
             return new Term[] {};
         }
 
@@ -242,7 +242,7 @@ public class GEMETService implements ThesaurusService {
         }
 
         if (termId.trim().length() == 0) {
-            log.warn( "No termId passed (" + termId + "), we return empty result !" );
+            log.warn("No termId passed ({}), we return empty result !", termId);
             return new TreeTerm[] {};
         }
 
@@ -253,7 +253,7 @@ public class GEMETService implements ThesaurusService {
         // we check on null, cause some concepts are buggy in service !
         // (e.g. concept/15041)
         if (parent == null) {
-            log.error( "Problems fetching " + termId + " we return empty children list !" );
+            log.error("Problems fetching {} we return empty children list !", termId);
             return new TreeTerm[] {};
         }
 
@@ -349,7 +349,7 @@ public class GEMETService implements ThesaurusService {
         // we check on null, cause some concepts are buggy in service !
         // (e.g. concept/15041)
         if (inConcept == null) {
-            log.error( "Problems fetching " + termId + " we return empty TreeTerm !" );
+            log.error("Problems fetching {} we return empty TreeTerm !", termId);
             return new TreeTermImpl();
         }
 
@@ -411,7 +411,7 @@ public class GEMETService implements ThesaurusService {
     @Override
     public RelatedTerm[] getRelatedTermsFromTerm(String termId, Locale locale) {
         if (termId == null || termId.trim().length() == 0) {
-            log.warn( "No termId passed (" + termId + "), we return empty result !" );
+            log.warn("No termId passed ({}), we return empty result !", termId);
             return new RelatedTerm[] {};
         }
 
@@ -525,7 +525,7 @@ public class GEMETService implements ThesaurusService {
     @Override
     public Term[] getTermsFromText(String text, int analyzeMaxWords, boolean ignoreCase, Locale locale) {
         if (text == null || text.trim().length() == 0) {
-            log.warn( "Empty text (" + text + ") passed, we return empty list !" );
+            log.warn("Empty text ({}) passed, we return empty list !", text);
             return new Term[] {};
         }
 

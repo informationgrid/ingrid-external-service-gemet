@@ -22,12 +22,8 @@
  */
 package de.ingrid.external.gemet;
 
-import com.hp.hpl.jena.rdf.model.LiteralRequiredException;
-import com.hp.hpl.jena.rdf.model.Property;
-import com.hp.hpl.jena.rdf.model.RDFNode;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.Statement;
-import com.hp.hpl.jena.rdf.model.StmtIterator;
+
+import org.apache.jena.rdf.model.*;
 
 public class RDFUtils {
 

@@ -2,7 +2,7 @@
  * **************************************************-
  * ingrid-external-service-gemet
  * ==================================================
- * Copyright (C) 2014 - 2022 wemove digital solutions GmbH
+ * Copyright (C) 2014 - 2023 wemove digital solutions GmbH
  * ==================================================
  * Licensed under the EUPL, Version 1.1 or – as soon they will be
  * approved by the European Commission - subsequent versions of the
@@ -22,12 +22,8 @@
  */
 package de.ingrid.external.gemet;
 
-import com.hp.hpl.jena.rdf.model.LiteralRequiredException;
-import com.hp.hpl.jena.rdf.model.Property;
-import com.hp.hpl.jena.rdf.model.RDFNode;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.Statement;
-import com.hp.hpl.jena.rdf.model.StmtIterator;
+
+import org.apache.jena.rdf.model.*;
 
 public class RDFUtils {
 

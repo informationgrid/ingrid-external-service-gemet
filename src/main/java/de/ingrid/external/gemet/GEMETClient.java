@@ -2,7 +2,7 @@
  * **************************************************-
  * ingrid-external-service-gemet
  * ==================================================
- * Copyright (C) 2014 - 2022 wemove digital solutions GmbH
+ * Copyright (C) 2014 - 2023 wemove digital solutions GmbH
  * ==================================================
  * Licensed under the EUPL, Version 1.1 or – as soon they will be
  * approved by the European Commission - subsequent versions of the
@@ -32,20 +32,21 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.jena.atlas.web.TypedInputStream;
-import org.apache.jena.riot.web.HttpOp;
-import org.apache.log4j.Logger;
+import org.apache.jena.http.HttpOp;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.shared.DoesNotExistException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
-import com.hp.hpl.jena.rdf.model.Model;
-import com.hp.hpl.jena.rdf.model.ModelFactory;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.shared.DoesNotExistException;
 
 public class GEMETClient {
 
-    private final static Logger log = Logger.getLogger( GEMETClient.class );
+    private final static Logger log = LogManager.getLogger( GEMETClient.class );
 
     /**
      * GEMET API "search_mode" in "getConceptsMatchingKeyword", see
@@ -126,19 +127,19 @@ public class GEMETClient {
         String req = conceptUri;
 
         if (log.isDebugEnabled()) {
-            log.debug( "Fetching term from: " + req );
+            log.debug("Fetching term from: {}", req);
         }
 
         try {
             // read the RDF/XML file. We have to pass Accept header to get RDF
             // response.
-            final TypedInputStream is = HttpOp.execHttpGet( req, "application/rdf+xml" );
+            final TypedInputStream is = HttpOp.httpGet( req, "application/rdf+xml" );
             model.read( is, null );
         } catch (DoesNotExistException e) {
-            log.error( "The term does not exist: " + req, e );
+            log.error("The term does not exist: {}", req, e );
             return null;
         } catch (Exception e) {
-            log.error( "The URI seems to have a problem: " + req, e );
+            log.error("The URI seems to have a problem: {}", req, e );
             return null;
         }
 
@@ -153,7 +154,7 @@ public class GEMETClient {
         String req = HTMLUtils.prepareUrl( serviceUrl ) + "getConcept?concept_uri=" + conceptUri + "&language=" + language;
 
         if (log.isDebugEnabled()) {
-            log.debug( "Fetching term from: " + req );
+            log.debug("Fetching term from: {}", req);
         }
 
         JSONObject result = null;
@@ -161,7 +162,7 @@ public class GEMETClient {
         try {
             result = (JSONObject) requestJsonUrl( req );
         } catch (Exception e) {
-            log.error( "The URI seems to have a problem: " + req, e );
+            log.error("The URI seems to have a problem: {}", req, e );
         }
 
         return result;
@@ -214,7 +215,7 @@ public class GEMETClient {
     public JSONArray getConceptsMatchingKeyword(String keyword, String language, MatchingConceptsSearchMode searchMode) {
         JSONArray result = new JSONArray();
         if (keyword == null || keyword.trim().length() == 0) {
-            log.warn( "Empty keyword (" + keyword + ") passed, we return empty result !" );
+            log.warn("Empty keyword ({}) passed, we return empty result !", keyword);
             return result;
         }
 
@@ -222,13 +223,13 @@ public class GEMETClient {
                 + "&thesaurus_uri=" + ConceptType.CONCEPT + "&language=" + language;
 
         if (log.isDebugEnabled()) {
-            log.debug( "Fetching terms from: " + req );
+            log.debug("Fetching terms from: {}", req);
         }
 
         try {
             result = (JSONArray) requestJsonUrl( req );
         } catch (Exception e) {
-            log.error( "The URI seems to have a problem: " + req, e );
+            log.error("The URI seems to have a problem: {}", req, e );
         }
 
         return result;
@@ -289,7 +290,7 @@ public class GEMETClient {
                 // (e.g. concept/15041)
                 JSONObject child = getConceptAsJSON( childId, language );
                 if (child == null) {
-                    log.error( "Problems fetching child " + childId + " we skip this one !" );
+                    log.error("Problems fetching child {} we skip this one !", childId);
                     continue;
                 }
 
@@ -390,13 +391,13 @@ public class GEMETClient {
         String req = HTMLUtils.prepareUrl( serviceUrl ) + "getTopmostConcepts?thesaurus_uri=" + thesaurusUri + "&language=" + language;
 
         if (log.isDebugEnabled()) {
-            log.debug( "Fetching terms from: " + req );
+            log.debug("Fetching terms from: {}", req);
         }
 
         try {
             result = (JSONArray) requestJsonUrl( req );
         } catch (Exception e) {
-            log.error( "The URI seems to have a problem: " + req, e );
+            log.error("The URI seems to have a problem: {}", req, e );
         }
 
         return result;
@@ -405,7 +406,7 @@ public class GEMETClient {
     public JSONArray getRelatedConcepts(String conceptUri, ConceptRelation relation, String language) {
         JSONArray result = new JSONArray();
         if (conceptUri == null || conceptUri.trim().length() == 0) {
-            log.warn( "No conceptUri passed (" + conceptUri + "), we return empty result !" );
+            log.warn("No conceptUri passed ({}), we return empty result !", conceptUri);
             return result;
         }
 
@@ -413,13 +414,13 @@ public class GEMETClient {
                 + "&language=" + language;
 
         if (log.isDebugEnabled()) {
-            log.debug( "Fetching terms from: " + req );
+            log.debug("Fetching terms from: {}", req);
         }
 
         try {
             result = (JSONArray) requestJsonUrl( req );
         } catch (Exception e) {
-            log.error( "The URI seems to have a problem: " + req, e );
+            log.error("The URI seems to have a problem: {}", req, e );
         }
 
         return result;
@@ -428,7 +429,7 @@ public class GEMETClient {
     public JSONArray getAllConceptRelatives(String conceptUri, ConceptRelation relation, String language) {
         JSONArray result = new JSONArray();
         if (conceptUri == null || conceptUri.trim().length() == 0) {
-            log.warn( "No conceptUri passed (" + conceptUri + "), we return empty result !" );
+            log.warn("No conceptUri passed ({}), we return empty result !", conceptUri);
             return result;
         }
 
@@ -436,13 +437,13 @@ public class GEMETClient {
                 + "&language=" + language;
 
         if (log.isDebugEnabled()) {
-            log.debug( "Fetching terms from: " + req );
+            log.debug("Fetching terms from: {}", req);
         }
 
         try {
             result = (JSONArray) requestJsonUrl( req );
         } catch (Exception e) {
-            log.error( "The URI seems to have a problem: " + req, e );
+            log.error("The URI seems to have a problem: {}", req, e );
         }
 
         return result;
@@ -455,7 +456,7 @@ public class GEMETClient {
         HttpResponse response = client.execute( getMethod );
         String json = IOUtils.toString( response.getEntity().getContent(), "UTF-8" );
         if (log.isDebugEnabled()) {
-            log.debug( "response: " + json );
+            log.debug("response: {}", json);
         }
         return new JSONParser().parse( json );
     }

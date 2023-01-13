@@ -2,7 +2,7 @@
  * **************************************************-
  * ingrid-external-service-gemet
  * ==================================================
- * Copyright (C) 2014 - 2022 wemove digital solutions GmbH
+ * Copyright (C) 2014 - 2023 wemove digital solutions GmbH
  * ==================================================
  * Licensed under the EUPL, Version 1.1 or – as soon they will be
  * approved by the European Commission - subsequent versions of the
@@ -27,11 +27,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
-import org.apache.log4j.Logger;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-
-import com.hp.hpl.jena.rdf.model.Resource;
 
 import de.ingrid.external.gemet.GEMETClient.ConceptRelation;
 import de.ingrid.external.om.RelatedTerm;
@@ -45,7 +45,7 @@ import de.ingrid.external.om.impl.TreeTermImpl;
 
 public class GEMETMapper {
 
-    private final static Logger log = Logger.getLogger( GEMETMapper.class );
+    private final static Logger log = LogManager.getLogger( GEMETMapper.class );
 
     public List<Term> mapToTerms(List<JSONArray> jsonArrayList) {
         return mapToTermsWithKeywordsFilter( jsonArrayList, null, null );
@@ -286,7 +286,7 @@ public class GEMETMapper {
         else if (ConceptRelation.GROUP_MEMBER == conceptRelation)
             return RelationType.CHILD;
 
-        log.error( "Could not map ConceptRelation (" + conceptRelation + "), we return null !" );
+        log.error("Could not map ConceptRelation ({}), we return null !", conceptRelation);
 
         return null;
     }

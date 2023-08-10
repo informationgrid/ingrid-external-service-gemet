@@ -132,7 +132,7 @@ public class GEMETServiceTest {
             }
 
             // exact "water (substance)"
-            terms = service.findTermsFromQueryTerm("Water (Substance)", MatchingType.EXACT, true, Locale.ENGLISH);
+            terms = service.findTermsFromQueryTerm("water (substance)", MatchingType.EXACT, true, Locale.ENGLISH);
             assertThat(terms, arrayWithSize(1));
             checkTerm(terms[0], null, TermType.DESCRIPTOR, null);
             assertThat(terms[0].getName().toLowerCase(), equalTo("water (substance)"));
@@ -142,7 +142,7 @@ public class GEMETServiceTest {
                 assertThat(terms[0].getAlternateName(), is(nullValue()));
 
             // contains "Water" and "Substance"
-            terms = service.findTermsFromQueryTerm("Water Substance", MatchingType.CONTAINS, true, Locale.ENGLISH);
+            terms = service.findTermsFromQueryTerm("water (substance", MatchingType.CONTAINS, true, Locale.ENGLISH);
             assertThat(terms.length, greaterThan(0));
             for (Term term : terms) {
                 checkTerm(term, null, TermType.DESCRIPTOR, null);
@@ -340,9 +340,9 @@ public class GEMETServiceTest {
         assertThat(terms.length, equalTo(4));
         for (RelatedTerm term : terms) {
             assertThat(term.getId(),
-                    anyOf(containsString("supergroup/5306"), containsString("concept/4359"), containsString("concept/5825"), containsString("concept/14848")));
-            if (term.getId().contains("supergroup/5306")) {
-                checkTerm(term, "http://www.eionet.europa.eu/gemet/supergroup/5306", TermType.NODE_LABEL, "ZUSATZVERZEICHNISSE");
+                    anyOf(containsString("group/5306"), containsString("group/4359"), containsString("group/5825"), containsString("group/14848")));
+            if (term.getId().contains("group/5306")) {
+                checkTerm(term, "http://www.eionet.europa.eu/gemet/group/5306", TermType.NODE_LABEL, "ZUSATZVERZEICHNISSE");
                 assertThat(term.getRelationType().equals(RelationType.PARENT), is(true));
             }
             if (term.getId().contains("concept/14848")) {
@@ -365,7 +365,7 @@ public class GEMETServiceTest {
         terms = service.getRelatedTermsFromTerm("http://www.eionet.europa.eu/gemet/concept/14848", Locale.GERMAN);
         assertThat(terms.length, equalTo(3));
         for (RelatedTerm term : terms) {
-            assertThat(term.getId(), anyOf(containsString("concept/4359"), containsString("concept/5825"), containsString("group/14980")));
+            assertThat(term.getId(), anyOf(containsString("concept/4359"), containsString("concept/5825"), containsString("concept/14980")));
             if (term.getId().contains("concept/4359")) {
                 checkTerm(term, "http://www.eionet.europa.eu/gemet/concept/4359", TermType.DESCRIPTOR, "in-situ");
                 assertThat(term.getRelationType().equals(RelationType.CHILD), is(true));

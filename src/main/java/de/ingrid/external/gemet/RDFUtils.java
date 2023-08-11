@@ -43,7 +43,7 @@ public class RDFUtils {
             node = getObject( res, "skos", "altLabel", lang );
 
         if (node != null) {
-            return node.asNode().getLiteralValue().toString();
+            return node.asNode().getLiteralValue().toString().trim();
         }
         return null;
     }
@@ -59,8 +59,13 @@ public class RDFUtils {
     private static RDFNode getObject(Resource res, String namespace, String name) {
         String nsURI = res.getModel().getNsPrefixURI( namespace );
         Property prop = res.getModel().createProperty( nsURI + name );
-        Statement stmt = res.getProperty( prop );
-        return stmt != null ? stmt.getObject() : null;
+        SimpleSelector selector = new SimpleSelector(null, prop, (RDFNode)null);
+        StmtIterator statements = res.getModel().listStatements(selector);
+        if (statements.hasNext()) {
+            Statement next = statements.next();
+            return next.getObject();
+        }
+        return null;
     }
 
     private static RDFNode getObject(Resource res, String namespace, String name, String lang) {
@@ -68,9 +73,12 @@ public class RDFUtils {
         if (nsURI == null)
             nsURI = namespace;
         Property prop = res.getModel().createProperty( nsURI + name );
-        StmtIterator stmts = res.listProperties( prop );
-        while (stmts.hasNext()) {
-            Statement stmt = stmts.next();
+
+        SimpleSelector selector = new SimpleSelector(null, prop, (RDFNode)null);
+
+        StmtIterator statements = res.getModel().listStatements(selector);
+        while (statements.hasNext()) {
+            Statement stmt = statements.next();
             try {
                 if (stmt.getLanguage().equals( lang )) {
                     return stmt.getObject();
